@@ -55,8 +55,8 @@
 
     </div>
     <div show={modeComponentTest} style="flex-grow:2;flex-wrap: nowrap;" class="containerH">
-      <!--<jsonPreviewer name="testPreviewer" style="flex-grow:1">
-    </jsonPreviewer>-->
+      <jsonEditor ref="testPreviewer" style="flex-grow:1">
+        </jsonEditor>
       <div class="containerV commandBar" style="flex-basis:50px">
         <div></div>
         <div class="commandGroup containerH">
@@ -67,7 +67,7 @@
         <div></div>
       </div>
 
-      <jsonEditor name="testPreviewer" mode="text" style="flex-grow:1"></jsonEditor>
+      <!--<jsonEditor name="testPreviewer" mode="text" style="flex-grow:1"></jsonEditor>-->
 
     </div>
     <div style="flex-basis:250px" class="containerV" >
@@ -97,7 +97,7 @@
     </div>
   </div>
   <script>
-    this.itemCurrent;
+    this.itemCurrent={};
 
     saveWorkspaceComponent(e) {
       if (this.editionContainer.persist == undefined) {
@@ -202,12 +202,7 @@
 
     // RiotControl.on('item_current_testPull_done', function (data) {   this.modeComponentTest = true;   console.log('item_current_testPull_done | data :', data);   this.tags.testPreviewer.data = data;   this.update(); }.bind(this));
 
-    RiotControl.on('item_current_work_done', function (data) {
-      this.modeComponentTest = true;
-      console.log('item_current_work_done | data :', data);
-      this.tags.testPreviewer.data = data;
-      this.update();
-    }.bind(this));
+
 
     // RiotControl.on('navigator_mount', function (webComponentName) {   console.log('navigator_mount');   this.cleanNavigation();   this.contentNavigator = riot.mount('#contentNavigator', webComponentName)[0]; }.bind(this));
     // RiotControl.on('item_current_edit_mode', function (item) {   console.log('item_current_edit_mode', item);   var tagName;
@@ -241,6 +236,13 @@
       this.update();
     }.bind(this));
 
-    this.on('mount', function () {});
+    this.on('mount', function () {
+      RiotControl.on('item_current_work_done', function (data) {
+        this.modeComponentTest = true;
+        console.log('item_current_work_done | data :', data);
+        this.refs.testPreviewer.data = data;
+        this.update();
+    }.bind(this));
+    });
   </script>
 </workspace-component-editor>

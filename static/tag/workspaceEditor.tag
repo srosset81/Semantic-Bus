@@ -22,9 +22,10 @@
       <div class="{color1}" if={componentView} id="component" onclick={goComponent}>Composant(s)</div>
       <div class="{color2}" id="user" if={userView} onclick={goUser}>Utilisateur(s)</div>
       <div class="{color3}" if={DescriptionView} id="description" onclick={goDescription}>Déscription</div>
+      <div class="{color4}" if={DescriptionView} id="description" onclick={goUtilisation}>Utilisation</div>
     </div>
     <div show={modeComponentList}>
-      <zenTable style="flex:1" css="background-color:white!important;color: #3883fa;" disallowcommand={innerData.mode=='read' } allowcancelcommand={false} id="composant">
+      <zenTable style="flex:1" css="background-color:white!important;color: #3883fa;" disallowcommand={innerData.mode=='read' } allowcancelcommand={false} id="composant" ref="componentZenTable">
         <yield to="header">
           <div>nom</div>
           <div>composant technique</div>
@@ -38,7 +39,7 @@
       </zenTable>
     </div>
     <div show={modeUserList}>
-      <zenTable title="" style="flex:1" disallownavigation="true" css="background-color:white!important;color: #3883fa;" id="userliste" disallowcommand={innerData.mode=="read" }>
+      <zenTable title="" style="flex:1" disallownavigation="true" css="background-color:white!important;color: #3883fa;" id="userliste" disallowcommand={innerData.mode=="read"} ref="userZenTable">
         <yield to="header">
           <div>email</div>
           <div>role</div>
@@ -65,6 +66,7 @@
         }
         name="workspaceNameInput"
         type="text"
+        ref="workspaceNameInput"
         placeholder="nom du workspace"
         value="{innerData.name}"
         onkeyup="{nameFieldChange}"></input>
@@ -82,6 +84,7 @@
         innerData.mode=="edit"
         }
         name="workspaceDescriptionInput"
+        ref="workspaceDescriptionInput"
         type="text"
         placeholder="description du workspace"
         value="{innerData.description}"
@@ -183,9 +186,11 @@
     this.componentView = true;
     this.userView = true;
     this.DescriptionView = true;
+    this.utilisationView = true;
     this.color1 = "blue";
     this.color2 = "white";
     this.color3 = "white";
+    this.color4 = "white";
     this.innerData = {}
     this.modeUserList = false;
     this.modeComponentList = true;
@@ -202,6 +207,7 @@
       this.color2 = "white"
       this.color1 = "white"
       this.color3 = "blue"
+       this.color4 = "white"
       this.update()
     }.bind(this)
 
@@ -212,6 +218,7 @@
       this.color2 = "blue"
       this.color1 = "white"
       this.color3 = "white"
+       this.color4 = "white"
       //console.log(this.workspace._id.$oid) RiotControl.trigger('load_all_profil_by_workspace', {_id: this.workspace._id.$oid})
     }.bind(this)
 
@@ -222,6 +229,17 @@
       this.color2 = "white"
       this.color1 = "blue"
       this.color3 = "white"
+      this.color4 = "white"
+    }.bind(this)
+
+    goUtilisation(e) {
+      this.modeUserList = false;
+      this.modeComponentList = true;
+      this.modeUserDescription = false;
+      this.color2 = "white"
+      this.color1 = "white"
+      this.color3 = "white"
+      this.color4 = "blue"
     }.bind(this)
 
     this.persistClick = function (e) {
@@ -289,7 +307,7 @@
     }.bind(this));
 
     RiotControl.on('save_auto', function () {
-      //console.log("save auto data ||")
+      console.log("save auto data ||")
       this.componentView = true;
       this.userView = true;
       this.DescriptionView = true;
@@ -304,63 +322,68 @@
       RiotControl.trigger('workspace_current_persist');
     }.bind(this));
 
-    this.tags.zentable[0].on('delRow', function (message) {
-      RiotControl.trigger('workspace_current_delete_component', message);
-      RiotControl.trigger('workspace_current_persist');
-    }.bind(this));
-    this.tags.zentable[0].on('rowNavigation', function (data) {
-      RiotControl.trigger('component_current_show');
-      RiotControl.trigger('component_current_select', data);
-      //this.trigger('selectWorkspace');
-    }.bind(this));
 
-    RiotControl.on('workspace_current_changed', function (data) {
-      //console.log('workspaceEditor | workspace_current_changed', data); this.workspace = data
+
+
+    this.workspaceCurrentChanged=function(data){
+      console.log('workspaceEditor | workspaceCurrentChanged | ',data);
       this.innerData = data;
       this.tags.zentable[0].data = data.components;
       this.tags.zentable[1].data = data.users;
+
       this.update();
-    }.bind(this));
+    }.bind(this);
 
-    ////USER
 
-    RiotControl.on('all_profil_by_workspace_loaded', function (data) {
-      //this.innerDataUser = data; this.tags.zentable[1].data = data; this.update();
-    }.bind(this));
 
-    RiotControl.on('newScreenHistory', function (newScreenHistory) {
 
-      let lastScreen = newScreenHistory[newScreenHistory.length - 1].screen;
-      if (lastScreen != 'workspaceEditor') {
-        switch (lastScreen) {
-          case 'workspaceAddComponent':
-            this.componentView = true;
-            this.userView = false;
-            this.DescriptionView = false;
-            break;
-          case 'workspaceAddUser':
-            this.componentView = false;
-            this.userView = true;
-            this.DescriptionView = false;
-            break;
-          default:
 
-        }
-      } else {
-        this.componentView = true;
-        this.userView = true;
-        this.DescriptionView = true;
-      }
-      this.screenHistory = newScreenHistory;
-      this.update();
-    }.bind(this));
+
+    // RiotControl.on('newScreenHistory', function (newScreenHistory) {
+    //
+    //   let lastScreen = newScreenHistory[newScreenHistory.length - 1].screen;
+    //   if (lastScreen != 'workspaceEditor') {
+    //     switch (lastScreen) {
+    //       case 'workspaceAddComponent':
+    //         this.componentView = true;
+    //         this.userView = false;
+    //         this.DescriptionView = false;
+    //         break;
+    //       case 'workspaceAddUser':
+    //         this.componentView = false;
+    //         this.userView = true;
+    //         this.DescriptionView = false;
+    //         break;
+    //       default:
+    //
+    //     }
+    //   } else {
+    //     this.componentView = true;
+    //     this.userView = true;
+    //     this.DescriptionView = true;
+    //   }
+    //   this.screenHistory = newScreenHistory;
+    //   this.update();
+    // }.bind(this));
 
     this.on('mount', function () {
+      console.log('wokspaceEditor | Mount |',this);
+
+      this.tags.zentable[0].on('delRow', function (message) {
+        RiotControl.trigger('workspace_current_delete_component', message);
+        RiotControl.trigger('workspace_current_persist');
+      }.bind(this));
+      this.tags.zentable[0].on('rowNavigation', function (data) {
+        RiotControl.trigger('component_current_show');
+        RiotControl.trigger('component_current_select', data);
+        //this.trigger('selectWorkspace');
+      }.bind(this));
 
       this.tags.zentable[1].on('addRow', function (message) {
         this.componentView = false;
         this.userView = true;
         this.DescriptionView = false;
+        this.utilisationView = false;
         RiotControl.trigger('workspace_current_add_user_show', message);
       }.bind(this));
 
@@ -368,21 +391,32 @@
         this.componentView = true;
         this.userView = false;
         this.DescriptionView = false;
+        this.utilisationView = false;
         RiotControl.trigger('workspace_current_add_component_show', message);
       }.bind(this));
 
-      ///HEADER PAGE
 
-      this.workspaceNameInput.addEventListener('change', function (e) {
+      RiotControl.on('workspace_current_changed', this.workspaceCurrentChanged);
+
+      ///HEADER PAGE
+      this.refs.workspaceNameInput.addEventListener('change', function (e) {
         this.innerData.name = e.currentTarget.value;
       }.bind(this));
 
-      this.workspaceDescriptionInput.addEventListener('change', function (e) {
+      this.refs.workspaceDescriptionInput.addEventListener('change', function (e) {
         this.innerData.description = e.currentTarget.value;
       }.bind(this));
 
-      //RiotControl.trigger('workspace_current_refresh');
+      RiotControl.trigger('workspace_current_refresh');
     });
+
+    this.on('unmount', function () {
+      console.log('UNMOUNT');
+      RiotControl.off('workspace_current_changed', this.workspaceCurrentChanged);
+    });
+
+
+
   </script>
 
 </workspace-editor>

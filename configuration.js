@@ -6,7 +6,6 @@ module.exports = {
   mlabDBSeed: 'mongodb://mongodb://alex:alexfoot31@ds127153.mlab.com:27153/semantic_bus_seed',
   mlabDBToClone: 'mongodb://alex:alexfoot31@ds131362-a0.mlab.com:31362,ds131362-a1.mlab.com:31362/semantic_bus_prod?replicaSet=rs-ds131362',
   saveLock: false,
-  
   addLock: false,
   secret: process.env.JWT_TOKEN || 'secret',
   https: false,

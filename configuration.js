@@ -1,21 +1,19 @@
 module.exports = {
-  DB: 'sementic_bus_dev',
-  DBSeed: 'semantic_bus_seed',
+  DB: 'semantic_bus_prod',
   DBToClone: 'semantic_bus_prod',
-  mlabDB: 'mongodb://alex:alexfoot31@ds052629.mlab.com:52629/sementic_bus_dev',
-  mlabDBSeed: 'mongodb://mongodb://alex:alexfoot31@ds127153.mlab.com:27153/semantic_bus_seed',
-  mlabDBToClone: 'mongodb://alex:alexfoot31@ds131362-a0.mlab.com:31362,ds131362-a1.mlab.com:31362/semantic_bus_prod?replicaSet=rs-ds131362',
-  saveLock: false,
+  mlabDBToClone: 'mongodb://' + process.env.MLAB_USERNAME + ':' + process.env.MLAB_PASSWORD + '@ds131362-a0.mlab.com:31362,ds131362-a1.mlab.com:31362/semantic_bus_prod?replicaSet=rs-ds131362',
+  mlabDB: process.env.Mongo_Base,
   addLock: false,
-  secret: process.env.JWT_TOKEN || 'secret',
-  https: false,
-  mlab_token: 'ue_eHVRDWSW0r2YZuTLCi1BxVB_zXnOI',
+  
+  secret: process.env.JWT_TOKEN,
+  https: "force",
+  mlab_token: process.env.MLAB_TOKEN,
   googleAuth: {
-    'clientID': process.env.clientID_GOOGLE || '497545161510-jevr8h52tl51j5gsd208icp5bbbi9suq.apps.googleusercontent.com',
-    'clientSecret': process.env.client_GOOGLE_Secret || 'e-0uRyWiFqkbpCVWQGMh-EpW',
+    'clientID': process.env.clientID_GOOGLE,
+    'clientSecret': process.env.client_GOOGLE_Secret,
     'callbackURL': '/auth/'
   },
-  DBVersion : 2,
+  DBVersion: 2,
   DBscripts: [{
     sourceVersion: 1,
     destinationVersion: 2,

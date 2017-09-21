@@ -1,8 +1,7 @@
 <workspace-editor>
-  <!--<div class="containerV" style="flex-grow:1">-->
   <div class="commandBar containerH">
-    <div>{innerData.name}</div>
-    <div class="containerH commandGroup">
+      <div>{innerData.name}</div>
+      <div class="containerH commandGroup">
       <div onclick={editClick} class="commandButton" id="edit" if={innerData.mode=="read" }>
         edit
       </div>
@@ -10,104 +9,68 @@
         graph
       </div>
       <!--<div onclick={cancelClick}  class="commandButton" id="cancel"  if={innerData.mode=="edit" || innerData.mode=="init"}>
-            cancel
-          </div>-->
-      <div onclick={persistClick} class="{commandButton:true,notSynchronized:innerData.synchronized==false}" id="save" if={innerData.mode=="edit" || innerData.mode=="init" }>
+              cancel
+            </div>-->
+      <div onclick={persistClick} class="{commandButton:true,notSynchronized:innerData.synchronized==false}" id="save" if={innerData.mode=="edit"
+        || innerData.mode=="init" }>
         save
       </div>
     </div>
   </div>
-  <div>
-    <div class=" containerH" style="justify-content: flex-start!important">
-      <div class="{color1}" if={componentView} id="component" onclick={goComponent}>Composant(s)</div>
-      <div class="{color2}" id="user" if={userView} onclick={goUser}>Utilisateur(s)</div>
-      <div class="{color3}" if={DescriptionView} id="description" onclick={goDescription}>Déscription</div>
-    </div>
-    <div show={modeComponentList}>
-      <zenTable style="flex:1" css="background-color:white!important;color: #3883fa;" disallowcommand={innerData.mode=='read' } allowcancelcommand={false} id="composant">
-        <yield to="header">
-          <div>nom</div>
-          <div>composant technique</div>
-          <div>fonction</div>
-        </yield>
-        <yield to="row">
-          <div style="width:20%">{name}</div>
-          <div style="width:20%">{type}</div>
-          <div style="width:60%">{description}</div>
-        </yield>
-      </zenTable>
-    </div>
-    <div show={modeUserList}>
-      <zenTable title="" style="flex:1" disallownavigation="true" css="background-color:white!important;color: #3883fa;" id="userliste" disallowcommand={innerData.mode=="read" }>
-        <yield to="header">
-          <div>email</div>
-          <div>role</div>
-        </yield>
-        <yield to="row">
-          <div style="width:70%">{email}</div>
-          <div style="width:30%">{role}</div>
-        </yield>
-      </zenTable>
-    </div>
-    <div show={modeUserDescription} class="description-worksapce" id="description">
-      <label style="padding-top:3vh">{labelInputName}
-      </label>
-      <input
-        readonly={innerData.mode=="read"
-        }
-        class={readOnly
-        :
-        innerData.mode=="read"
-        ,
-        description-worksapce-input
-        :
-        innerData.mode=="edit"
-        }
-        name="workspaceNameInput"
-        type="text"
-        placeholder="nom du workspace"
-        value="{innerData.name}"
-        onkeyup="{nameFieldChange}"></input>
-      <label style="padding-top:3vh">{labelInputDesc}
-      </label>
-      <input
-        readonly={innerData.mode=="read"
-        }
-        class={readOnly
-        :
-        innerData.mode=="read"
-        ,
-        description-worksapce-input
-        :
-        innerData.mode=="edit"
-        }
-        name="workspaceDescriptionInput"
-        type="text"
-        placeholder="description du workspace"
-        value="{innerData.description}"
-        onkeyup="{descriptionFieldChange}"></input>
-    </div>
-    <!--<span>composant d'initialisation : </span>
-      <span>{innerData.firstComponent.type} : {innerData.firstComponent.desription}</span>-->
-
-    <!-- <div class="containerH" show={innerData.mode=="read"}>
-        <div class="containerV" style="flex-grow:1">
-          <div class="commandBar containerH">
-            <div class="commandTitle">
-              composants
-            </div>
-          </div>
-          <div class="containerV" style="flex-grow:1">
-            <div class="selector" each={innerData.components} onclick={componentClick}>
-              {type} : {name}
-            </div>
-          </div>
-        </div>
-      </div> -->
+  <div class=" containerH" style="justify-content: flex-start!important">
+    <div class="{color1}" if={componentView} id="component" onclick={goComponent}>Composant(s)</div>
+    <div class="{color2}" id="user" if={userView} onclick={goUser}>Utilisateur(s)</div>
+    <div class="{color3}" if={DescriptionView} id="description" onclick={goDescription}>Déscription</div>
+    <div class="{color4}" if={DescriptionView} id="description" onclick={goUtilisation}>Utilisation</div>
   </div>
-  <!--</div>-->
-  <style>
+  <div show={modeComponentList}>
+    <graph></graph>
+    <!--<zenTable style="flex:1" css="background-color:white!important;color: #3883fa;" disallowcommand={innerData.mode=='read' }
+      allowcancelcommand={false} id="composant" ref="componentZenTable">
+      <yield to="header">
+        <div>nom</div>
+        <div>composant technique</div>
+        <div>fonction</div>
+      </yield>
+      <yield to="row">
+        <div style="width:20%">{name}</div>
+        <div style="width:20%">{type}</div>
+        <div style="width:60%">{description}</div>
+      </yield>
+    </zenTable>-->
+  </div>
+  <div show={modeUserList}>
+    <zenTable title="" style="flex:1" disallownavigation="true" css="background-color:white!important;color: #3883fa;" id="userliste"
+      disallowcommand={innerData.mode=="read" } ref="userZenTable">
+      <yield to="header">
+        <div>email</div>
+        <div>role</div>
+      </yield>
+      <yield to="row">
+        <div style="width:70%">{email}</div>
+        <div style="width:30%">{role}</div>
+      </yield>
+    </zenTable>
+  </div>
+  <div show={modeUserDescription} class="description-worksapce" id="description">
+    <label style="padding-top:3vh">{labelInputName}
+        </label>
+    <input readonly={innerData.mode=="read" } class={readOnly : innerData.mode=="read" , description-worksapce-input : innerData.mode=="edit"
+      } name="workspaceNameInput" type="text" ref="workspaceNameInput" placeholder="nom du workspace" value="{innerData.name}"
+      onkeyup="{nameFieldChange}"></input>
+    <label style="padding-top:3vh">{labelInputDesc}
+        </label>
+    <input readonly={innerData.mode=="read" } class={readOnly : innerData.mode=="read" , description-worksapce-input : innerData.mode=="edit"
+      } name="workspaceDescriptionInput" ref="workspaceDescriptionInput" type="text" placeholder="description du workspace" value="{innerData.description}"
+      onkeyup="{descriptionFieldChange}"></input>
+  </div>
+  <div show={modeUtilisation} class="description-worksapce" >
+    <graph-of-use>
+    </graph-of-use>
+  </div>
 
+
+  <style>
     .description-worksapce-input {
       text-align: left;
       border-bottom: 1px solid #3883fa !important;
@@ -183,13 +146,16 @@
     this.componentView = true;
     this.userView = true;
     this.DescriptionView = true;
+    this.utilisationView = true;
     this.color1 = "blue";
     this.color2 = "white";
     this.color3 = "white";
+    this.color4 = "white";
     this.innerData = {}
     this.modeUserList = false;
     this.modeComponentList = true;
     this.modeUserDescription = false;
+    this.modeUtilisation = false;
     this.title = "Workspace"
     this.persist = function () {
       this.persistClick();
@@ -199,9 +165,11 @@
       this.modeUserList = false;
       this.modeComponentList = false;
       this.modeUserDescription = true;
+      this.modeUtilisation = false;
       this.color2 = "white"
       this.color1 = "white"
       this.color3 = "blue"
+       this.color4 = "white"
       this.update()
     }.bind(this)
 
@@ -209,9 +177,11 @@
       this.modeUserList = true;
       this.modeComponentList = false;
       this.modeUserDescription = false;
+      this.modeUtilisation = false;
       this.color2 = "blue"
       this.color1 = "white"
       this.color3 = "white"
+       this.color4 = "white"
       //console.log(this.workspace._id.$oid) RiotControl.trigger('load_all_profil_by_workspace', {_id: this.workspace._id.$oid})
     }.bind(this)
 
@@ -219,9 +189,22 @@
       this.modeUserList = false;
       this.modeComponentList = true;
       this.modeUserDescription = false;
+      this.modeUtilisation = false;
       this.color2 = "white"
       this.color1 = "blue"
       this.color3 = "white"
+      this.color4 = "white"
+    }.bind(this)
+
+    goUtilisation(e) {
+      this.modeUserList = false;
+      this.modeComponentList = false;
+      this.modeUserDescription = false;
+      this.modeUtilisation = true;
+      this.color2 = "white"
+      this.color1 = "white"
+      this.color3 = "white"
+      this.color4 = "blue"
     }.bind(this)
 
     this.persistClick = function (e) {
@@ -269,10 +252,7 @@
 
     RiotControl.on('share_change', function (data) {
       console.log(data)
-      this.tags.zentable[1].data.push({
-        "email": data.email,
-        "role": data.workspaces[data.workspaces.length - 1].role
-      });
+      this.refs.userZenTable.data= data.workspace.users;
       this.update();
       data = null;
     }.bind(this));
@@ -291,8 +271,8 @@
       // this.componentView = true; this.userView = true; this.DescriptionView = true; this.update();
     }.bind(this));
 
-    RiotControl.on('save_auto', function (data) {
-      console.log("save auto data ||", data)
+    RiotControl.on('save_auto', function () {
+      console.log("save auto data ||")
       this.componentView = true;
       this.userView = true;
       this.DescriptionView = true;
@@ -304,87 +284,106 @@
         field: 'description',
         data: this.innerData.description
       });
-      RiotControl.trigger('workspace_current_persist', data);
-    }.bind(this))
-
-    this.tags.zentable[0].on('delRow', function (message) {
-      RiotControl.trigger('workspace_current_delete_component', message);
       RiotControl.trigger('workspace_current_persist');
     }.bind(this));
-    this.tags.zentable[0].on('rowNavigation', function (data) {
-      RiotControl.trigger('component_current_select', data);
-      //this.trigger('selectWorkspace');
-    }.bind(this));
 
-    RiotControl.on('workspace_current_changed', function (data) {
-      //console.log('workspaceEditor | workspace_current_changed', data); this.workspace = data
+
+
+    this.workspaceCurrentChanged=function(data){
+      console.log('workspaceEditor | workspaceCurrentChanged | ',data);
       this.innerData = data;
-      this.tags.zentable[0].data = data.components;
-      this.tags.zentable[1].data = data.users;
+      //this.tags.zentable[0].data = data.components;
+      this.refs.userZenTable.data = data.users;
+      this.tags['graph-of-use'].data = data
+      console.log("graph tag =======>",this.tags['graph-of-use'].data)
       this.update();
-    }.bind(this));
+    }.bind(this);
 
-    ////USER
 
-    RiotControl.on('all_profil_by_workspace_loaded', function (data) {
-      //this.innerDataUser = data; this.tags.zentable[1].data = data; this.update();
-    }.bind(this));
 
-    RiotControl.on('newScreenHistory', function (newScreenHistory) {
 
-      let lastScreen = newScreenHistory[newScreenHistory.length - 1].screen;
-      if (lastScreen != 'workspaceEditor') {
-        switch (lastScreen) {
-          case 'workspaceAddComponent':
-            this.componentView = true;
-            this.userView = false;
-            this.DescriptionView = false;
-            break;
-          case 'workspaceAddUser':
-            this.componentView = false;
-            this.userView = true;
-            this.DescriptionView = false;
-            break;
-          default:
 
-        }
-      } else {
-        this.componentView = true;
-        this.userView = true;
-        this.DescriptionView = true;
-      }
-      this.screenHistory = newScreenHistory;
-      this.update();
-    }.bind(this));
+
+    // RiotControl.on('newScreenHistory', function (newScreenHistory) {
+    //
+    //   let lastScreen = newScreenHistory[newScreenHistory.length - 1].screen;
+    //   if (lastScreen != 'workspaceEditor') {
+    //     switch (lastScreen) {
+    //       case 'workspaceAddComponent':
+    //         this.componentView = true;
+    //         this.userView = false;
+    //         this.DescriptionView = false;
+    //         break;
+    //       case 'workspaceAddUser':
+    //         this.componentView = false;
+    //         this.userView = true;
+    //         this.DescriptionView = false;
+    //         break;
+    //       default:
+    //
+    //     }
+    //   } else {
+    //     this.componentView = true;
+    //     this.userView = true;
+    //     this.DescriptionView = true;
+    //   }
+    //   this.screenHistory = newScreenHistory;
+    //   this.update();
+    // }.bind(this));
 
     this.on('mount', function () {
+      console.log('wokspaceEditor | Mount |',this);
 
-      this.tags.zentable[1].on('addRow', function (message) {
+      // this.tags.zentable[0].on('delRow', function (message) {
+      //   RiotControl.trigger('workspace_current_delete_component', message);
+      //   RiotControl.trigger('workspace_current_persist');
+      // }.bind(this));
+      // this.tags.zentable[0].on('addRow', function (message) {
+      //   this.componentView = true;
+      //   this.userView = false;
+      //   this.DescriptionView = false;
+      //   this.utilisationView = false;
+      //   RiotControl.trigger('workspace_current_add_component_show', message);
+      // }.bind(this));
+      
+      this.refs.userZenTable.on('rowNavigation', function (data) {
+        RiotControl.trigger('component_current_show');
+        RiotControl.trigger('component_current_select', data);
+        //this.trigger('selectWorkspace');
+      }.bind(this));
+
+      this.refs.userZenTable.on('addRow', function (message) {
         this.componentView = false;
         this.userView = true;
         this.DescriptionView = false;
-        RiotControl.trigger('workspace_current_add_user', message);
+        this.utilisationView = false;
+        RiotControl.trigger('workspace_current_add_user_show', message);
       }.bind(this));
 
-      this.tags.zentable[0].on('addRow', function (message) {
-        this.componentView = true;
-        this.userView = false;
-        this.DescriptionView = false;
-        RiotControl.trigger('workspace_current_add_component', message);
-      }.bind(this));
+
+
+
+      RiotControl.on('workspace_current_changed', this.workspaceCurrentChanged);
 
       ///HEADER PAGE
-
-      this.workspaceNameInput.addEventListener('change', function (e) {
+      this.refs.workspaceNameInput.addEventListener('change', function (e) {
         this.innerData.name = e.currentTarget.value;
       }.bind(this));
 
-      this.workspaceDescriptionInput.addEventListener('change', function (e) {
+      this.refs.workspaceDescriptionInput.addEventListener('change', function (e) {
         this.innerData.description = e.currentTarget.value;
       }.bind(this));
 
-      //RiotControl.trigger('workspace_current_refresh');
+      RiotControl.trigger('workspace_current_refresh');
     });
+
+    this.on('unmount', function () {
+      console.log('UNMOUNT');
+      RiotControl.off('workspace_current_changed', this.workspaceCurrentChanged);
+    });
+
+
+
   </script>
 
 </workspace-editor>

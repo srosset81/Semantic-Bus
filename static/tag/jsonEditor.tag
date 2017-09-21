@@ -6,7 +6,7 @@
     this.title="";
     Object.defineProperty(this, "data", {
        set: function (data) {
-         console.log(this.editor);
+         console.log('JsonEditor set data|',data);
          this.editor.set(data);
          if(this.editor.options.mode!='text'){
            this.editor.expandAll();
@@ -21,7 +21,8 @@
        }.bind(this),
        get: function () {
         return this.editor.get();
-      }.bind(this)
+      }.bind(this),
+      configurable: true
     });
 
     /*this.jsonEditorReadyPromise=new Promise(function(resolve, reject) {
@@ -84,7 +85,7 @@
   </script>
   <style>
     /*@import 'js/jsonEditor/dist/jsoneditor.min.css';*/
-    .jsoneditor{
+    .jsoneditor {
       height : 100%;
     }
   </style>

@@ -1,20 +1,26 @@
-
-
 function WorkspaceBusiness() {
 
   // --------------------------------------------------------------------------------
 
-  this.connectWorkspaceComponent = function (workspaceComponentsList) {
-    console.log('connectWorkspaceComponent',workspaceComponentsList);
-    workspaceComponentsList.forEach(component=>{
+  this.connectWorkspaceComponent = function(workspaceComponentsList) {
+    console.log('connectWorkspaceComponent', workspaceComponentsList);
+    workspaceComponentsList.forEach(component => {
 
-      component.connectionsAfter=component.connectionsAfter.map(componentId=>{
-        return(sift({_id:componentId},workspaceComponentsList))[0];
-      });
+      if (component != null) {
+        component.connectionsAfter = component.connectionsAfter.map(componentId => {
+          return (sift({
+            _id: componentId
+          }, workspaceComponentsList))[0];
+        });
+        component.connectionsAfter=sift({$ne:undefined},component.connectionsAfter);
 
-      component.connectionsBefore=component.connectionsBefore.map(componentId=>{
-        return(sift({_id:componentId},workspaceComponentsList))[0];
-      });
+        component.connectionsBefore = component.connectionsBefore.map(componentId => {
+          return (sift({
+            _id: componentId
+          }, workspaceComponentsList))[0];
+        });
+        component.connectionsBefore=sift({$ne:undefined},component.connectionsBefore);
+      }
     });
 
 
@@ -57,20 +63,54 @@ function WorkspaceBusiness() {
     // return out;
   }; //<= connectWorkspaceComponent
 
+  this.unserializeWorkspace = function(workspace) {
+    console.log('connectWorkspaceComponent', workspaceComponentsList);
+    this.connectWorkspaceComponent(workspace.components);
+  }; //<= connectWorkspaceComponent
+
   // --------------------------------------------------------------------------------
 
 
-  this.serialiseWorkspaceComponent = function (workspaceComponentIn) {
-    if (workspaceComponentIn._id) {
-      workspaceComponentIn = workspaceComponentIn._id
-      return true;
+  this.serialiseWorkspaceComponent = function(workspaceComponentIn) {
+    if (!workspaceComponentIn.connectionsBefore) {
+      workspaceComponentIn.connectionsBefore = []
     }
+    if (!workspaceComponentIn.connectionsAfter) {
+      workspaceComponentIn.connectionsAfter = []
+    }
+    var out = {
+      _id: workspaceComponentIn._id,
+      specificData: workspaceComponentIn.specificData,
+      name: workspaceComponentIn.name,
+      average_consumption: workspaceComponentIn.average_consumption,
+      flow_size: workspaceComponentIn.flow_size,
+      connectionsBefore: workspaceComponentIn.connectionsBefore.map(conn => {
+        return {
+          _id: conn._id
+        }
+      }),
+      connectionsAfter: workspaceComponentIn.connectionsAfter.map(conn => {
+        return {
+          _id: conn._id
+        }
+      }),
+      module: workspaceComponentIn.module,
+      type: workspaceComponentIn.type,
+      description: workspaceComponentIn.description,
+      editor: workspaceComponentIn.editor,
+      workspaceId: workspaceComponentIn.workspaceId,
+      graphPositionX : workspaceComponentIn.graphPositionX,
+      graphPositionY : workspaceComponentIn.graphPositionY
+    }
+    console.log(out)
+    return out;
+
   } //<= serialiseWorkspaceComponent
 
   // --------------------------------------------------------------------------------
 
 
-  this.serialiseWorkspace = function (workspaceIn) {
+  this.serialiseWorkspace = function(workspaceIn) {
     console.log('serialiseWorkspace | ', workspaceIn);
     var components = [];
     var out = {
@@ -81,9 +121,7 @@ function WorkspaceBusiness() {
       flow_size: workspaceIn.flow_size
     }
     for (component of workspaceIn.components) {
-      if (this.serialiseWorkspaceComponent(component)) {
-        components.push(component._id);
-      }
+      components.push(this.serialiseWorkspaceComponent(component));
     }
     out.components = components;
     console.log('serialiseWorkspace | out | ', out);

@@ -1,85 +1,122 @@
 <scrapper-editor>
-  <div>Information à propos du scrappeur</div>
-  <label>url fixe </label>
-    <input type="checkbox"  name="choix3" value= {input3} onclick= {check3}></input>
-    <input type="text" class={!input3? 'hide' : 'display'} name="url" value={data.specificData.url}></input>
-  <label> url venant du flux precedent </label>
-    <input type="checkbox"  name="choix4" value= {input4} onclick= {check4} ></input>
-  <div>
-    <label>Path</label>
-      <input type="text" onkeyup={cheminValueChange} value={fieldValue}></input>
-    <label>Group</label>
-      <input type="text" onkeyup={groupValueChange} placeholder="group your data for next treatment" value={groupValue}></input>
-    <label> attribut </label>
-      <input type="text" onkeyup={attributValueChange} value={attributField} placeholder=" [WARNING] 'attribs.href' ou 'text' seulement pour le moment" ></input>
+   
+   <h4 style="text-align:center">Choice base URL</h4>
+
+  <label>URL </label>
+  <input type="text" ref="url" class="form-controle" value={url}></input>
+
+  <h4 style="text-align:center">Create Action</h4>
+
+
+  <label>Choice your Action Type</label>
+
+  <select class="form-controle" ref="actionType" >
+    <option each={actionType in options}>{actionType}</option>
+  </select>
+
+  <label>Action Name</label>
+
+  <input type="text" class="form-controle" ref="action" ></input>
+
+
+  <label>Selector CSS</label>
+  <input type="text" class="form-controle" ref="selector" ></input>
+
+  <div show = {getAttr} >
+    <label>Attribut</label>
+    <input type="text" class="form-controle" ref="attribut" ></input>
   </div>
-     <zenTable style="flex:1" title="Chemin et attributs">
-        <yield to="header">
-          <div>path</div>
-          <div>group</div>
-          <div>attribut</div>
-        </yield>
-        <yield to="row">
-          <div>{field}</div>
-           <div>{group}</div>
-          <div>{attribut}</div>
-        </yield>
-    </zenTable>
+  <div>
+  <div show = {setValue} >
+    <label>Value(Set)</label>
+    <input type="text" class="form-controle" ref="setValue"></input>
+  </div>
+
+
+  <zenTable style="flex:1" title="Your scenario">
+    <yield to="header">
+      <div>Name</div>
+      <div>Type</div>
+      <div>Selector</div>
+      <div>Attribut</div>
+      <div>Value</div>
+    </yield>
+    <yield to="row">
+      <div>{action}</div>
+      <div>{actionType}</div>
+      <div>{selector}</div>
+      <div>{attribut}</div>
+      <div>{setValue}</div>
+    </yield>
+  </zenTable>
+
+
   <script>
-
-      this.input3 = false;
-      this.input4 = false;
+      this.options = ["getValue", "getHtml", "getAttr", "setValue", "click"]
       this.currentRowId = undefined;
-      this.innerData={};
-      this.test=function(){
-        console.log('test');
-      }
+      this.data = {};
+      this.data.specificData = {}
+      this.data.specificData.scrappe = []
+      this.getAttr = false
+      this.setValue = false
+      this.updateData = function (dataToUpdate) {
+        this.data = dataToUpdate;
+        console.log(dataToUpdate)
+        if (this.data.specificData.scrappe == undefined) {
+          this.data.specificData.scrappe = [];
+        }
 
-      check3(e){
-        if( this.input3 == false){
-            this.input3 = true  
+        if (this.data.specificData.url != undefined) {
+          this.refs.url.value = this.data.specificData.url;
         }
-        else{
-          this.input3 = false
-        }
-        console.log(this.input3)
-      }
 
-      check4(e){
-        if( this.input4 == false){
-            this.input4 = true  
+        if (this.tags.zentable != undefined) {
+          this.tags.zentable.data = this.data.specificData.scrappe;
         }
-        else{
-          this.input4 = false
-        }
-        console.log(this.input4)
-      }
+      this.update();
+      }.bind(this);
 
-      Object.defineProperty(this, 'data', {
-        set: function (data) {
-          this.innerData=data;
-          this.update();
-        }.bind(this),
-        get: function () {
-          return this.innerData;
-        },
-        configurable: true
+    this.on('mount', function () {
+      RiotControl.on('item_current_changed', this.updateData);
+      this.on('unmount', function () {
+        RiotControl.off('item_current_changed', this.updateData);
       });
 
-      this.on('mount', function () {
+
       this.tags.zentable.on('rowSelect', function (data) {
-        console.log(data);
-        this.currentRowId=data.rowid
-        this.fieldValue = data.field;
-        this.attributField = data.attribut
-        this.groupValue = data.group
+        this.currentRowId = data.rowid
+        this.refs.actionType.value = data.actionType
+        this.refs.action.value = data.action;
+        this.refs.selector.value = data.selector
+        this.refs.attribut.value = data.attribut
         this.update();
       }.bind(this));
+
       this.tags.zentable.on('addRow', function () {
-        //console.log(this.data.specificData.scrappe)
-        this.data.specificData.scrappe.push({field: this.fieldValue, group: this.groupValue, attribut: this.attributField});
-        this.tags.zentable.data = this.data.specificData.scrappe;
-        console.log(this.tags.zentable.data)
+        console.log(this.refs.action);
+        console.log(this.refs.actionType.value);
+        if(this.refs.actionType.value == "getValue" || this.refs.actionType.value == "getHtml" ||  this.refs.actionType.value == "click"){
+           console.log("in set le reste")
+          this.refs.attribut = null;
+          this.refs.setValue = null
+        }
+        else if(this.refs.actionType.value == "setValue"){
+          console.log("in set value")
+          this.refs.attribut = null;
+        }
+        else if(this.refs.actionType.value == "getAttr"){
+          console.log("in set value")
+          this.refs.setValue = null
+        }
+          this.data.specificData.scrappe.push({
+            selector: this.refs.selector,
+            action: this.refs.action,
+            actionType: this.refs.actionType.value,
+            attribut: this.refs.attribut,
+            setValue: this.refs.setValue
+          });
+          this.tags.zentable.data = this.data.specificData.scrappe;
+          this.update()        
       }.bind(this));
 
       this.tags.zentable.on('delRow', function (row) {
@@ -88,84 +125,108 @@
         this.tags.zentable.data = this.data.specificData.scrappe;
       }.bind(this));
 
-      this.choix3.addEventListener('change',function(e){
-        this.data.specificData.fix_url = this.input3
-      }.bind(this));
 
-      this.url.addEventListener('change',function(e){
+      this.refs.url.addEventListener('change', function (e) {
+        console.log(e.currentTarget.value);
+        this.refs.url = e.currentTarget.value;
         this.data.specificData.url = e.currentTarget.value;
       }.bind(this));
 
-      this.choix4.addEventListener('change',function(e){
-        this.data.specificData.flow_before = this.input4
+    
+      this.refs.selector.addEventListener('change', function (e) {
+        //console.log(e.target.value);
+        this.refs.selector = e.target.value;
+
       }.bind(this));
 
-    });
 
-    RiotControl.on('item_current_changed', function (data) {
-      this.data = data;
-      if (this.data.specificData.scrappe == undefined) {
-        this.data.specificData.scrappe = [];
+     
+      this.refs.action.addEventListener('change', function (e) {
+
+        this.refs.action = e.target.value;
+
+      }.bind(this));
+
+
+      this.refs.attribut.addEventListener('change', function (e) {
+        //console.log(e.target.value);
+        this.refs.attribut = e.target.value;
+
+      }.bind(this));
+
+      this.refs.setValue.addEventListener('change', function (e) {
+        //console.log(e.target.value);
+        this.refs.setValue = e.target.value;
+
+      }.bind(this));
+
+      this.action_type = function(){
+        console.log("function")
+       
       }
-      console.log(this.data.specificData.scrappe);
-      if (this.tags.zentable != undefined) {
-        this.tags.zentable.data = this.data.specificData.scrappe;
-      }
-      this.update();
-    }.bind(this));
 
-    this.cheminValueChange = function (e) {
-      //console.log(e.target.value);
-      console.log("cheminValueChange");
-      this.fieldValue = e.target.value;
-      this.data.specificData.scrappe[this.currentRowId]={field:this.fieldValue, group: this.groupValue , attribut:this.attributField};
-      this.tags.zentable.data = this.data.specificData.scrappe;
-    }.bind(this);
-
-    this.groupValueChange = function (e) {
-      //console.log(e.target.value);
-      console.log("groupValueChange");
-      this.groupValue = e.target.value;
-      this.data.specificData.scrappe[this.currentRowId]={field:this.fieldValue, group: this.groupValue , attribut:this.attributField};
-      this.tags.zentable.data = this.data.specificData.scrappe;
-    }.bind(this);
-
-
-     this.attributValueChange = function (e) {
-      console.log("attributValueChange");
-      this.attributField = e.target.value;
-      this.data.specificData.scrappe[this.currentRowId]={attribut:this.attributField, field:this.fieldValue, group: this.groupValue};
-      this.tags.zentable.data = this.data.specificData.scrappe;
-    }.bind(this);
-
-      
+      this.refs.actionType.addEventListener('change', function (e) {
+        console.log(e.target.value);
+        this.refs.actionType = e.target.value;
+        if(e.target.value == "getAttr"){
+          console.log("in true")
+          this.getAttr = true
+          this.setValue = false
+        }else if(e.target.value == "setValue"){
+          this.setValue = true
+          this.getAttr = false
+        }else{
+          this.setValue = false
+          this.getAttr = false
+        }
+        this.update()
+      }.bind(this))
+    })
   </script>
+  
   <style> 
-
-    .hide {
-      display:none;
+    .form-controle {
+      display: block;
+      width: 100%;
+      padding: .5rem .75rem;
+      font-size: 1rem;
+      line-height: 1.25;
+      color: #464a4c;
+      background-color: #fff;
+      background-image: none;
+      -webkit-background-clip: padding-box;
+      background-clip: padding-box;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: .25rem;
+      -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+      -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
     }
 
+      .hide {
+        display:none;
+      }
 
-    .display {
-      display:block;
+
+      .display {
+        display:block;
+      }
+
+
+      /* Aspect des checkboxes */
+      /* :before sert à créer la case à cocher */
+      [type="checkbox"]:not(:checked) + label:before,
+      [type="checkbox"]:checked + label:before {
+      content: '';
+      position: absolute;
+      left:0; top: 2px;
+      width: 17px; height: 17px; /* dim. de la case */
+      border: 1px solid #aaa;
+      background: #f8f8f8;
+      border-radius: 3px; /* angles arrondis */
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.3) /* légère ombre interne */
     }
-
-
-    /* Aspect des checkboxes */
-    /* :before sert à créer la case à cocher */
-    [type="checkbox"]:not(:checked) + label:before,
-    [type="checkbox"]:checked + label:before {
-    content: '';
-    position: absolute;
-    left:0; top: 2px;
-    width: 17px; height: 17px; /* dim. de la case */
-    border: 1px solid #aaa;
-    background: #f8f8f8;
-    border-radius: 3px; /* angles arrondis */
-    box-shadow: inset 0 1px 3px rgba(0,0,0,.3) /* légère ombre interne */
-  }
-
-</style>
+  </style>
 </scrapper-editor>
-    

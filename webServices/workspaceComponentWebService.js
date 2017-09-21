@@ -38,7 +38,7 @@ module.exports = function (router) {
       var recursivPullResolvePromiseDynamic = require('./recursivPullResolvePromise');
       return recursivPullResolvePromiseDynamic.getNewInstance().resolveComponent(data, 'work');
     }).then(function (data) {
-      //console.log("IN WORKSPACE COMPONENT RETURN DATA |", data)
+      console.log("IN WORKSPACE COMPONENT RETURN DATA |", data)
       res.json(data.data);
     })
   }); //<= resolveComponent
@@ -46,11 +46,13 @@ module.exports = function (router) {
   // --------------------------------------------------------------------------------
 
   router.put('/workspaceComponent/', function (req, res) {
+
     var configuration = require('../configuration');
     if (configuration.saveLock == false) {
       var id = req.body._id;
       var componentToUpdate = req.body;
-      workspace_component_lib.update(id, req.body).then(function (compoupdate) {
+      console.log('workspaceComponent',componentToUpdate);
+      workspace_component_lib.update(req.body).then(function (compoupdate) {
         res.json(compoupdate)
       })
     } else {

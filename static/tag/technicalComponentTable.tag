@@ -8,9 +8,10 @@
       <div if={actionReady} onclick={addComponent} class="commandButton notSynchronized">
         add
       </div>
+      {actionReady}
     </div>
   </div>
-    <zenTable style="flex:1"  disallowcommand={true} disallownavigation={true}>
+    <zenTable style="flex:1" ref="technicalComponentTable" disallowcommand={true} disallownavigation={true}>
       <yield to="header">
         <div>type</div>
         <div>description</div>
@@ -25,25 +26,29 @@
 
     this.actionReady=false;
     addComponent(e) {
-      this.tags.zentable.data.forEach(record=>{
-        if(record.selected){
-          RiotControl.trigger('workspace_current_add_component',record);
-        }
+      //this.tags.zentable.data.forEach(record=>{
+      //  if(record.selected){
+      RiotControl.trigger('workspace_current_add_components',sift({selected:{$eq:true}},this.tags.zentable.data));
 
-      });
+      RiotControl.trigger('back');
+        //  }
+      //});
     }
 
-    this.on('mount', function () {
-      //console.log(this.tags);
-    //  this.tags.zentable.on('action',function(data){
-    //    //console.log(data);
-    //    data.forEach(record=>{
-    //      RiotControl.trigger('technicalComponent_current_select',record);
-    //    });
-     //
-    //  }.bind(this));
-     this.tags.zentable.on('rowSelect',function(){
+    refreshTechnicalComponents(data){
+      console.log('technicalCompoents | this.refs |',this.refs);
+      this.tags.zentable.data=data;
+    }
 
+    this.updateData=function(dataToUpdate){
+      this.tags.zentable.data=dataToUpdate;
+    }.bind(this);
+
+
+    this.on('mount', function () {
+
+     this.tags.zentable.on('rowSelect',function(){
+        console.log('ROWSELECTD');
         this.actionReady=true;
         this.update();
      }.bind(this));
@@ -62,21 +67,20 @@
        RiotControl.trigger('workspace_current_add_component_cancel');
 
      }.bind(this));
-
-
-
-     RiotControl.on('technicalComponent_collection_changed',function(data){
-       //console.log('view',data);
-       this.tags.zentable.data=data;
-     }.bind(this));
+     RiotControl.on('technicalComponent_collection_changed',this.updateData);
 
      RiotControl.trigger('technicalComponent_collection_load');
 
-     //this.refresh();
+   });
 
+   this.on('unmount', function () {
+     RiotControl.off('technicalComponent_collection_changed',this.updateData);
    });
   </script>
   <style>
-
+  .notSynchronized {
+    background-color: orange !important;
+    color: white;
+  }
   </style>
 </technical-component-table>

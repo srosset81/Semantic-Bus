@@ -22,16 +22,17 @@ describe('Parcour complet creation d\'un workspace et ajout d\'un composant', ()
       token = browser.localStorage('GET', 'token').value;
 
     })
-    it('affichages wokspaces', function () {
+})
+    // it('affichages wokspaces', function () {
 
 
         browser.waitForVisible('navigation');
         let workSpaceSelector = '#workspaceSelector';
         browser.waitForVisible(workSpaceSelector,10000);
 
-        // ACCES LISTE WORKSPACE
-        $(workSpaceSelector).click();
-        browser.waitForVisible('workspace-table');
+    //     // ACCES LISTE WORKSPACE
+    //     $(workSpaceSelector).click();
+    //     browser.waitForVisible('workspace-table');
 
         // MODE AJOUT D'UN WORKSPACE //(edit mode de base quand on creer un workspace)
         $('zentable').$('.test-addRow').click()
@@ -71,16 +72,16 @@ describe('Parcour complet creation d\'un workspace et ajout d\'un composant', ()
         // //ADD DESCRIPTION
         // console.log("test et")
         // $('#backBar').click()
-      })
-})
+//       })
+// })
 
-describe('test storage', () => {
-  it('set storage', function () {
-      console.log('set',token);
-      expect(browser.getUrl()).to.be.equal('http://app-9cd7b697-3708-49fe-a478-7ed223d0aa11.cleverapps.io/ihm/application.html');
+// describe('test storage', () => {
+//   it('set storage', function () {
+//       console.log('set',token);
+//       expect(browser.getUrl()).to.be.equal('http://app-9cd7b697-3708-49fe-a478-7ed223d0aa11.cleverapps.io/ihm/application.html');
 
-  })
-})
+//   })
+// })
 
 
 
@@ -174,8 +175,6 @@ describe('test storage', () => {
 // })
 
 
-
-
 // describe('modification email', () => {
 //   it('on devrait voir son email modifier, function () {
 //       ///CONNEXION
@@ -193,7 +192,6 @@ describe('test storage', () => {
 //       browser.waitForVisible('navigation');
 //       let workSpaceSelector = 'div[name="workspaceSelector"]';
 //       browser.waitForVisible(workSpaceSelector,3000);
-
 //       // ACCES LISTE WORKSPACE
 //       $(workSpaceSelector).click();
 //       browser.waitForVisible('workspace-table');

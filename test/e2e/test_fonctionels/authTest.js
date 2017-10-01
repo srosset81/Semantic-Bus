@@ -22,16 +22,58 @@ describe('Parcour complet creation d\'un workspace et ajout d\'un composant', ()
       token = browser.localStorage('GET', 'token').value;
 
     })
-    it('affichages wokspaces', function () {
+})
+    // it('affichages wokspaces', function () {
 
 
         browser.waitForVisible('navigation');
         let workSpaceSelector = '#workspaceSelector';
         browser.waitForVisible(workSpaceSelector,10000);
 
-        // ACCES LISTE WORKSPACE
-        $(workSpaceSelector).click();
-        browser.waitForVisible('workspace-table');
+    //     // ACCES LISTE WORKSPACE
+    //     $(workSpaceSelector).click();
+    //     browser.waitForVisible('workspace-table');
+    //
+    //     // MODE AJOUT D'UN WORKSPACE //(edit mode de base quand on creer un workspace)
+    //     $('zentable').$('.test-addRow').click()
+    //     browser.waitForVisible('workspace-editor');
+    //
+    //     // // AJOUT D'UN  COMPONENT //
+    //     // $('zentable').$('div.commandButton').click();
+    //     // browser.waitForVisible('technical-component-table');
+    //     // $('technical-component-table').$('zentable').$('div[name="tableBody"]').click();
+    //     // browser.waitForVisible('workspace-editor');
+    //     // // AJOUT D'UN USER
+    //
+    //     // //DEPLACEMENT SUR LE MENU USER
+    //     // browser.waitUntil(() => {
+    //     //    if(browser.isVisible('#containerloaderDiv') == false){
+    //     //      return true
+    //     //     };
+    //     // }, 50000, 'le loader doit avoir disparue')
+    //
+    //     // $('workspace-editor').$('div.white').click()
+    //
+    //     // // EDIT MODE //
+    //     // $('workspace-editor').$('div.commandButton').click()
+    //
+    //     // // CLICK SUR PLUS //
+    //     // browser.waitForVisible('zentable');
+    //     // $('#userliste').$('div.commandButton').click();
+    //
+    //     // /// REMPLISSAGE LIST USER ///
+    //     // browser.waitForVisible('user-list');
+    //     // browser.setValue('#users-list', 'semanticbusdev@gmail.com')
+    //
+    //     // /// PARTAGE DU WORKSPACE
+    //     // $('user-list').$('.share-btn').click()
+    //     // $('#cancel').click()
+    //
+    //     // //ADD DESCRIPTION
+    //     // console.log("test et")
+    //     // $('#backBar').click()
+    //   })
+})
 
         // MODE AJOUT D'UN WORKSPACE //(edit mode de base quand on creer un workspace)
         $('zentable').$('.test-addRow').click()
@@ -71,16 +113,16 @@ describe('Parcour complet creation d\'un workspace et ajout d\'un composant', ()
         // //ADD DESCRIPTION
         // console.log("test et")
         // $('#backBar').click()
-      })
-})
+//       })
+// })
 
-describe('test storage', () => {
-  it('set storage', function () {
-      console.log('set',token);
-      expect(browser.getUrl()).to.be.equal('http://app-9cd7b697-3708-49fe-a478-7ed223d0aa11.cleverapps.io/ihm/application.html');
+// describe('test storage', () => {
+//   it('set storage', function () {
+//       console.log('set',token);
+//       expect(browser.getUrl()).to.be.equal('http://app-9cd7b697-3708-49fe-a478-7ed223d0aa11.cleverapps.io/ihm/application.html');
 
-  })
-})
+//   })
+// })
 
 
 

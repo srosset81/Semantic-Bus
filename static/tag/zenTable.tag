@@ -14,14 +14,15 @@
     <yield from="header"/>
   </div>
   <div class="containerV" style="flex:1" name="tableBodyContainer" ref="tableBodyContainer">
-    <div class="table" name="tableBody" ref="tableBody" ondrop={on_drop} ondragover={on_drag_over} >
-      <div class="tableRow {selected:selected} {mainSelected:mainSelected}"  name="tableRow" ondragend={dragEnd} ondragstart={dragStart} draggable="true" onclick={rowClic} data-rowid={rowid} data-id={_id} each={indexedData}>
+    <div class="table" name="tableBody" ref="tableBody"  ondragover={on_drag_over} ondrop={on_drop}>
+      <div class="tableRow {selected:selected} {mainSelected:mainSelected}"  name="tableRow" draggable={true} onclick={rowClic} data-rowid={rowid} data-id={_id} each={indexedData}  ondragend={parent.drag_end}
+      	ondragstart={parent.drag_start} >
         <yield from="row"/>
         <div style="width:10px" if={!opts.disallownavigation==true}>
           <div class="containerH commandBar">
             <div class="commandGroup containerH">
-              <div onclick={navigationClick} class="commandButton" data-rowid={rowid}>
-                <img src="./image/Super-Mono-png/PNG/basic/blue/arrow-right.png" height="25px">
+              <div onclick={navigationClick} class="commandButton" data-rowid={rowid} >
+                <img src="./image/Super-Mono-png/PNG/basic/blue/arrow-right.png" height="25px" draggable={false}>
               </div>
             </div>
           </div>
@@ -30,6 +31,93 @@
     </div>
   </div>
   <script>
+
+ this.Id = null
+
+  on_drop(event){ 
+    console.log("---- drop ----- ")
+  	var pos = 0;
+    var children= this.placeholder.parentNode.children;
+    console.log(children)
+		for(var i=0;i<children.length;i++){
+    	if(children[i]==this.placeholder) break;
+    	if(children[i]!= this.dragged && children[i].classList.contains("tableRow"))
+      	pos++;
+    }
+  	//this.movePage(this.lists,event.item.list.name,this.pageId,pos);
+    this.update();
+  }
+  
+  on_drag_over(e){
+    // return true; para no aceptar
+    
+    if(e.target.parentElement.className != "tableRow  ")
+    	return;
+  
+    /// PAGE ///
+    if(e.target.parentElement.className == "tableRow  "){
+      this.over = e.target.parentElement;
+      // Inside the dragOver method
+      var relY = e.clientY - this.over.offsetTop;
+      var height = this.over.offsetHeight / 2;
+      var parent = e.target.parentElement.parentNode;
+      if(relY > height) {
+        this.nodePlacement = "after";
+        parent.insertBefore(this.placeholder, e.target.parentElement.nextElementSibling);
+      }
+      else if(relY < height) {
+        this.nodePlacement = "before"
+        parent.insertBefore(this.placeholder, e.target.parentElement);
+      }
+    }
+    this.update()
+  }
+  
+  drag_end(event){
+    console.log("----dragend-----", event) 
+    var pos = 0;
+    var children= this.placeholder.parentNode.children;
+    console.log(children)
+		for(var i=0;i<children.length;i++){
+    	if(children[i]== this.placeholder) break;
+    	if(children[i]!= this.dragged && children[i].classList.contains("tableRow"))
+      	pos++;
+    }
+    console.log(event.item._id, pos)
+  	this.movePage(this.innerData, event.item._id, pos);
+    event.preventUpdate= true;
+    if(this.placeholder.parentNode){
+    	this.placeholder.parentNode.removeChild(this.placeholder);
+    }
+    this.update();
+  }
+  
+	drag_start(event){
+    console.log("----drag start-----")
+    this.dragged = event.target;
+    this.Id = event.item._id;
+    console.log("----- drag end -----", this.Id)
+    return true;
+  }
+  
+  removePage(workspaces,idWorkspace){
+    for(var j=0;workspaces && j < workspaces.length;j++){
+      var workspace = workspaces[j];
+      if(workspace._id == idWorkspace){
+        workspaces.splice(j,1);
+        return workspace;
+      }
+    }       
+  }
+   
+   movePage(workspaces,idWorkspace,pos){
+   		var workspaceObj = this.removePage(workspaces,idWorkspace);
+      if(workspaceObj){
+        console.log("------- in if move page ------ ")
+        //console.log(workspaces, workspaceObj, pos);
+        workspaces.splice(pos, 0, workspaceObj);
+      }
+   }
     var arrayChangeHandler = {
       tag: this,
       get: function (target, property, third, fourth) {
@@ -74,20 +162,6 @@
       configurable: true
     });
 
-    on_drag_over(event) {
-        event.preventDefault();
-    }
-
-    on_drop(event) {
-        event.preventDefault();
-        console.log("drop");
-    }
-    dragStart(event) {
-      console.log("drag start", event)
-    }
-    dragEnd(event){
-      console.log("dragEnd")
-    }
 
     Object.defineProperty(this, 'indexedData', {
       get: function () {
@@ -186,9 +260,9 @@
       this.placeholder=document.createElement("div");
       this.placeholder.className = "placeholder";
       //this.reportCss();
-      addResizeListener(this.refs.tableBody, function () {
-        this.recalculateHeader()
-      }.bind(this));
+     // addResizeListener(this.refs.tableBody, function () {
+        //this.recalculateHeader()
+      //}.bind(this));
       this.refs.tableBodyContainer.addEventListener('scroll', function (e) {
         //console.log(this.tableBodyContainer.scrollLeft);
         this.refs.tableHeader.scrollLeft = this.refs.tableBodyContainer.scrollLeft;
@@ -254,6 +328,15 @@
       border-right-width: 3px;
       padding-right: 2px;
     }
+
+    .placeholder{
+      margin:4px;
+      margin-left:10px;
+      border-width:2px;
+      border-style:solid;
+      border-radius:4px;
+      border-color:#3883fa;
+  }
 
     .tableRow {
       cursor: pointer;

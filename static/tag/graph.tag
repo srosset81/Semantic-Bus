@@ -57,7 +57,9 @@
       <g id="textLayer"></g>
       <g id="lineCommandLayer"></g>
       <g id="shapeCommandLayer"></g>
-      <image id="addComponentGraph" xlink:href="./image/Super-Mono-png/PNG/basic/blue/toggle-expand-alt.png" class="commandButtonImage" x="1400" y="20" width="80" height="80" onclick={addComponentClick}></image>
+      <image id="addComponentGraph" xlink:href="./image/ajout_composant.svg" class="commandButtonImage" x="1400" y="20" width="60" height="60" onclick={addComponentClick}></image>
+      <text x="1290" y="60" 
+font-size="25"  fill="rgb(33,150,243)" id="mytext" if={fullscreen == true} onclick={graphClick}>full size </text>
     </svg>
   </div>
   <!--graphContainer-->
@@ -68,10 +70,18 @@
     this.selectorsLines = [];
     this.modeConnectAfter = false;
     this.modeConnectBefore = false;
+    this.fullscreen = true
 
     addComponentClick(e) {
       RiotControl.trigger('workspace_current_add_component_show', e);
     }
+
+    graphClick(e) {
+      console.log('EDIT');
+      RiotControl.trigger('workspace_current_graph');
+      this.update()
+    }
+    
 
     editClick(e) {
       console.log('graph edit Component | ', this.selectedNodes[0].component);
@@ -524,6 +534,11 @@
     // this.modeConnectBefore = modes.before;   this.update(); }.bind(this)); evenement appele par riot
     this.on('mount', function () { // mount du composant riot
       //RiotControl.on('workspace_current_changed', this.refreshGraph);
+      if(this.parent != undefined  && this.parent.title == "Workspace"){
+        this.fullscreen = true
+      }else{
+        this.fullscreen = false
+      }
       RiotControl.on('workspace_graph_selection_changed', this.drawSelected);
       RiotControl.on('workspace_graph_compute_done', this.drawGraph);
       //RiotControl.trigger('workspace_current_refresh'); console.log(this.refs.graphSvgCanvas.viewBox.baseVal);
@@ -540,7 +555,7 @@
 
   <style scoped>
     svg {
-      //background-color: #EFEFEF;
+      //background-color: rgb(238,242,249);
     }
 
     #shapeLayer image {
@@ -575,7 +590,7 @@
     }
 
     .background {
-      fill: #EFEFEF;
+      fill: rgb(238,242,249);
       fill-opacity: 1;
       stroke: #000;
       stroke-width: 0;

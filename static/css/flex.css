@@ -13,21 +13,32 @@
 .containerH{
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
+  /*flex-wrap: wrap;*/
   align-items : stretch;
   overflow-y: hidden;
 }
+
+
 
 .containerV
 {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-
+  /*overflow-y: hidden;*/
 }
 .containerV>*
 {
   flex-shrink : 0;
+}
+.containerV-scrollale
+{
+  overflow-y: auto;
+  height: 0px;
+}
+
+.flex-basis {
+  display: flex;
+  flex-basis:100%;
 }
 
 

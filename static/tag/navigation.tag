@@ -1,4 +1,4 @@
-<navigation >
+<navigation>
 
   <div id="containerloaderDiv">
     <div id="row">
@@ -16,121 +16,156 @@
       </h1>
     </div>
   </div>
-  <div class="containerV" style="flex-grow:1">
+  <div class="containerV">
     <div class="containerH commandBar errorMessage" if={errorMessage}>
       <div>{errorMessage}</div>
       <div onclick={closeError} class="commandButtonImage" ><img src="./image/Super-Mono-png/PNG/basic/red/button-cross.png" height="20px"></div>
-
     </div>
-    <div class="containerH" style="bottom:0;top:0;right:0;left:0;position:absolute;flex-wrap:nowrap;">
+    <!--  CONTAINER GENERAL  -->
+    <div class="containerV" style="bottom:0;top:0;right:0;left:0;position:absolute;">
+      <div class="containerH" style="background-color: rgb(33,150,243);flex-wrap:nowrap;">
 
-      <!--
-    <div class="containerV" class="containerV" style="height: 100vh;flex-shrink:5">
-      <div class="containerV" style="flex-grow:1;flex-basis:50%">
-        <div class="containerH" style="flex-grow:1;flex-wrap: nowrap;">
-          <div class="containerV" style="flex-basis:20%" if={isScrennToShow('menu')}>
-            <div class="commandBar containerH">
-              Menu
+        <!--  HEADER WORKSPACE  -->
+        <div class="containerV" style="justify-content: space-between;background-color: rgb(33,150,243);flex-grow: 1;" if={isScrennToShow('myWorkspaces')}>
+          <div  class="header" >
+            <div class="containerH commandBar" style="margin-bottom: 15pt;justify-content:center">
+               <div><strong>Mes Work</strong>spaces</div>
             </div>
-            <div class="containerH" style="justify-content:space-between">
-              <div onclick={workspaceSelectorClick} name="workspaceSelector" class="selector mainSelector" style="padding: 5vh; font-size:1.2em;flex-grow:1;">
-                <div>
-                  My Workspaces
-                </div>
+            <div class="containerH commandBar">
+              <div></div>
+              <div><input class="champ"  type="text" name="inputSearch" ref="inputSearch" placeholder="Search" onkeyup={ filterCards }></div>
+              <div onclick={addRowClick} class="buttonBus">
+                Add
               </div>
             </div>
-            <div class="containerH" style="justify-content:space-between">
-              <div onclick={workspaceShareSelectorClick} name="workspaceSelector" class="selector mainSelector" style="padding: 5vh; font-size:1.2em;flex-grow:1;">
-                <div>
-                  Shared Workspaces
-                </div>
-              </div>
-            </div>
-            <div class="containerH" style="justify-content:space-between">
-              <div onclick={profilSelectorClick} name="profilSelector" class="selector mainSelector" style="padding: 5vh; font-size:1.2em;flex-grow:1;">
-                <div>Profil</div>
-              </div>
-              <div onclick={adminSelectorClick} name="adminSelector" class="selector mainSelector" style="padding: 5vh; font-size:1.2em;flex-grow:1;" if={showAdmin}>
-                <div>Admin</div>
-              </div>
-            </div>
-          </civ>
+          </div>
         </div>
-      -->
 
-      <div class="containerV commandBar" style="justify-content: space-between;background-color: rgb(33,150,243);" >
-        <div class="containerV commandGroup" style="flex-grow:0;justify-content:flex-start;padding:6pt">
-          <div class="commandButtonImage" onclick={workspaceSelectorClick} id="workspaceSelector">
-            <img src="./image/dossier.svg" style="    background-color: rgb(33,150,243);
-    margin-top: 10pt;" width="40px">
-          </div>
-          <div class="commandButtonImage" onclick={workspaceShareSelectorClick}>
-            <img src="./image/double_dossier.svg" style="    background-color: rgb(33,150,243);
-    margin-top: 10pt;"  width="40px">
-          </div>
-          <div class="commandButtonImage" onclick={profilSelectorClick}>
-            <img src="./image/photo.svg" style="    background-color: rgb(33,150,243);
-    margin-top: 10pt;"  width="40px">
-          </div>
-          <div class="commandButtonImage" onclick={adminSelectorClick} if={showAdmin}>
-            <img src="./image/Roulette_bus.svg" style="    background-color: rgb(33,150,243);
-    margin-top: 10pt;"  width="40px">
+        <!--  HEADER LANDING  -->
+        <div class="containerV" style="justify-content: space-between;background-color: rgb(33,150,243);flex-grow: 1;" if={isScrennToShow('landing')}>
+          <div  class="header" >
+            <div class="containerH commandBar" style="margin-bottom: 15pt;justify-content:center">
+              <div><strong>Bienvenue</strong></div>
+            </div>
           </div>
         </div>
-        <div class="containerV commandGroup" style="flex-grow:1;justify-content:center;">
-          <div id="backButton" onclick={back} if={isScrennHide()} class="commandButtonImage">
-            <img src="./image/Super-Mono-png/PNG/basic/blue/arrow-left.png" style="    background-color: rgb(33,150,243);
-    margin-top: 10pt;"  width="40px">
+
+        <!--  HEADER WORKSPACE SHARE  -->
+        <div class="containerV" style="justify-content: space-between;background-color: rgb(33,150,243);flex-grow: 1;"  if={isScrennToShow('sharedWorkspaces')}>
+          <div  class="header" >
+            <div class="containerH commandBar" style="justify-content: center;flex-direction: column;align-items: center;">
+              <div><strong>Mes Work</strong>spaces partagés</div>
+              <input class="champ"  type="text" name="inputSearch" ref="inputSearch" placeholder="Search" onkeyup={ filterCards }>
+            </div>
           </div>
         </div>
-        <div class="containerV commandGroup" style="flex-grow:0;justify-content:flex-end;">
-          <img src="./image/working.gif" width="60px" if={workInProgress}>
+
+        <!--  HEADER PROFIL  -->
+        <div class="containerV" style="justify-content: space-between;background-color: rgb(33,150,243);flex-grow: 1;"  if={isScrennToShow('profil')}>
+          <div  class="header" >
+            <div class="containerH commandBar" style="justify-content: center;flex-direction: column;align-items: center;">
+              <div><strong>Mon espace</strong> personel</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('landing')}>
-        <landing></landing>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('myWorkspaces')}>
-        <workspace-table></workspace-table>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('sharedWorkspaces')}>
-        <workspace-share-table></workspace-share-table>
-      </div>
 
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('workspaceEditor')}>
-        <workspace-editor></workspace-editor>
-      </div>
 
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('workspaceAddComponent')}>
-        <technical-component-table></technical-component-table>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('workspaceAddUser')}>
-        <user-list style="height:100%"></user-list>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('graph')}>
-        <graph></graph>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('componentEditor')}>
-        <workspace-component-editor></workspace-component-editor>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('profil')}>
-        <profil></profil>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('admin')}>
-        <admin></admin>
-      </div>
-      <div class="containerV" style="flex-grow:1" if={isScrennToShow('workPreview')}>
-        <jsonPreviewer></jsonPreviewer>
+      <div class="containerH" style="justify-content:center;justify-content: inherit; flex-grow:1">
+
+      <!--  NAVBAR   -->
+        <div class="containerV" style="justify-content: space-between;background-color: rgb(33,150,243);flex-basis:60px">
+          <!--<div class="containerV" style="flex-grow:1">-->
+          <div class="containerV" style="flex-basis:300px;flex-grow:0;">
+            <div class={commandButtonImage:true,selectedMenu:isScrennInHistory('myWorkspaces')} onclick={workspaceSelectorClick} id="workspaceSelector" style="flex-basis:40px">
+              <img src="./image/dossier.svg" width="40px">
+            </div>
+            <div class={commandButtonImage:true,selectedMenu:isScrennInHistory('sharedWorkspaces')} onclick={workspaceShareSelectorClick} style="flex-basis:40px">
+              <img src="./image/double_dossier.svg"  width="40px">
+            </div>
+            <div class={commandButtonImage:true,selectedMenu:isScrennInHistory('profil')} onclick={profilSelectorClick} style="flex-basis:40px">
+              <img src="./image/photo.svg"  width="40px">
+            </div>
+            <div class={commandButtonImage:true,selectedMenu:isScrennInHistory('admin')} onclick={adminSelectorClick} if={showAdmin} style="flex-basis:40px">
+              <img src="./image/Roulette_bus.svg"  width="40px">
+            </div>
+          </div>
+          <div class="containerV" style="flex-grow:1;justify-content: center">
+            <div id="backButton" onclick={back} if={isScrennHide()} class="commandButtonImage" style="flex-basis:40px">
+              <img src="./image/Super-Mono-png/PNG/basic/blue/arrow-left.png" style="    background-color: rgb(33,150,243);" width="40px">
+            </div>
+          </div>
+          <div class="containerV" style="flex-basis:40px;flex-grow:0;">
+            <div class="commandButtonImage" style="flex-basis:40px">
+              <img src="./image/working.gif" width="40px" if={workInProgress}>
+            </div>
+          </div>
+          <!--</div>-->
+        </div>
+
+      <!--  CONTENT   -->
+
+      <div class="containerV" style="flex-grow:1">
+
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('landing')}>
+          <landing></landing>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('myWorkspaces')}>
+          <workspace-table></workspace-table>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('sharedWorkspaces')}>
+          <workspace-share-table></workspace-share-table>
+        </div>
+
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('workspaceEditor')}>
+          <workspace-editor></workspace-editor>
+        </div>
+
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('workspaceAddComponent')}>
+          <technical-component-table></technical-component-table>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('workspaceAddUser')}>
+          <user-list style="height:100%"></user-list>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('graph')}>
+          <graph></graph>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('componentEditor')}>
+          <workspace-component-editor></workspace-component-editor>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('profil')}>
+          <profil></profil>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('admin')}>
+          <admin></admin>
+        </div>
+        <div class="containerV" style="flex-grow:1" if={isScrennToShow('workPreview')}>
+          <jsonPreviewer></jsonPreviewer>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 <script>
 
   this.persistInProgress = false;
   this.workInProgress = false;
-  //    this.workspaceComponents = [];
+
+
+
+  //HEADER EVENT
+
+  filterCards(e){
+      RiotControl.trigger('filterCards', e);
+  }
+
+  addRowClick(e) {
+     RiotControl.trigger('addRowWorkspace')
+  }
+
+
 
   RiotControl.on("ajax_receipt", function () {
     console.log("in hide");
@@ -188,8 +223,16 @@
         show: true
       }, this.screenHistory).length > 0;
     }
+    return out;
+  }
 
-    //console.log('isScrennToShow',screenToTest,out, this.screenHistory);
+  this.isScrennInHistory = function (screenToTest) {
+    let out = false;
+    if (this.screenHistory != undefined) {
+      out = sift({
+        screen: screenToTest
+      }, this.screenHistory).length > 0;
+    }
     return out;
   }
 
@@ -257,6 +300,18 @@
   });
 </script>
 <style>
+
+  .wrapper > * {
+    padding: 10px;
+    flex: 1 100%;
+  }
+
+  .wrapper {
+    display: flex;
+    flex-flow: row wrap;
+    font-weight: bold;
+    text-align: center;
+  }
 
   /*LANDING CSS */
 
@@ -348,6 +403,10 @@
     background-color: orange !important;
     color: white;
     z-index: 999;
+  }
+
+  .selectedMenu{
+      background-color: rgb(9,245,185);
   }
 
 </style>

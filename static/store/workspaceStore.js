@@ -7,11 +7,12 @@ function WorkspaceStore() {
 
 
   riot.observable(this)
-  this.workspaceCollection = [];
-  this.workspaceShareCollection = []
+  this.workspaceCollection;
+  this.workspaceShareCollection;
   this.workspaceCurrent;
   this.workspaceBusiness = new WorkspaceBusiness();
-  this.cancelRequire = false;
+  this.componentSelectedToAdd=[];
+  //this.cancelRequire = false;
   this.modeConnectBefore = false;
   this.modeConnectAfter = false;
 
@@ -24,52 +25,43 @@ function WorkspaceStore() {
   // ----------------------------------------- FUNCTION  -----------------------------------------
 
 
-  this.load = function(callback) {
-    console.log('load workspace to ||', localStorage.user_id);
-    $.ajax({
-      method: 'get',
-      url: '../data/core/workspaceByUser/' + localStorage.user_id,
-      headers: {
-        "Authorization": "JTW" + " " + localStorage.token
-      },
-      contentType: 'application/json',
-    }).done(function(data) {
-      console.log('load workspace', data);
-      this.workspaceCollection = data;
-      if (callback != undefined) {
-        callback();
-      }
-      this.trigger('workspace_collection_changed', this.workspaceCollection);
-      // if (this.workspaceCurrent) {
-      //   console.log("Update current workspace")
-      //   this.updateComponentListe(this.workspaceCurrent)
-      // }
-    }.bind(this));
+  this.load = function() {
+    //console.log('load workspace to ||', localStorage.user_id);
+    return new Promise((resolve, reject) => {
+      utilStore.ajaxCall({
+        method: 'get',
+        url: '../data/core/workspaceByUser/' + localStorage.user_id
+      }, true).then(data => {
+        console.log('load workspace', data);
+        this.workspaceCollection = data;
+        resolve(this.workspaceCollection);
+      }).catch(error => {
+        reject(error);
+      });
+    })
   }; //<= load_workspace
 
   // --------------------------------------------------------------------------------
 
-  this.loadShareWorkspace = function(callback) {
+  this.loadShareWorkspace = function() {
     console.log('load share workspace');
-    $.ajax({
-      method: 'get',
-      url: '../data/core/workspaces/share/' + localStorage.user_id,
-      headers: {
-        "Authorization": "JTW" + " " + localStorage.token
-      },
-      contentType: 'application/json',
-    }).done(function(data) {
-      console.log('ShareWorkspace load', data);
-      this.workspaceShareCollection = data;
-      if (callback != undefined) {
-        callback();
-      }
-      this.trigger('workspace_share_collection_changed', this.workspaceShareCollection);
-    }.bind(this));
+
+    return new Promise((resolve, reject) => {
+      utilStore.ajaxCall({
+        method: 'get',
+        url: '../data/core/workspaces/share/' + localStorage.user_id,
+      }, true).then(data => {
+        //console.log('load workspace', data);
+        this.workspaceShareCollection = data;
+        resolve(this.workspaceShareCollection);
+      }).catch(error => {
+        reject(error);
+      });
+    })
   }; //<= load_share_workspace
 
   // --------------------------------------------------------------------------------
-//TODO passer par le proxy client
+  //TODO passer par le proxy client
   this.create = function() {
     console.log('create');
     return new Promise((resolve, reject) => {
@@ -91,7 +83,7 @@ function WorkspaceStore() {
         //console.log('update data ||', data);
         this.trigger('workspace_current_persist_done', data);
         this.trigger('workspace_current_changed', this.workspaceCurrent);
-        this.menu='component';
+        this.menu = 'component';
         this.trigger('workspace_editor_menu_changed', 'component');
         resolve(data);
       }.bind(this));
@@ -99,7 +91,7 @@ function WorkspaceStore() {
   }; //<= create
 
   // --------------------------------------------------------------------------------
-//TODO passer par le proxy client
+  //TODO passer par le proxy client
   this.update = function(data) {
     console.log("data update", data)
     return new Promise((resolve, reject) => {
@@ -227,24 +219,21 @@ function WorkspaceStore() {
 
   this.select = function(record) {
     return new Promise((resolve, reject) => {
-      console.log('select ||', record);
-      this.workspaceCurrent = record;
-      $.ajax({
+      utilStore.ajaxCall({
         method: 'get',
-        url: '../data/core/workspace/' + record._id,
-        headers: {
-          "Authorization": "JTW" + " " + localStorage.token
-        },
-        contentType: 'application/json'
-      }).done(data => {
+        url: '../data/core/workspace/' + record._id
+      }, true).then(data => {
         this.workspaceBusiness.connectWorkspaceComponent(data.components);
         this.workspaceCurrent = data;
         this.workspaceCurrent.mode = 'edit';
         this.menu = 'component'
         //this.workspaceCurrent.synchronized =true;
         resolve(data);
+      }).catch(error => {
+        reject(error);
       });
     });
+
 
   }; // <= select
 
@@ -277,6 +266,7 @@ function WorkspaceStore() {
     this.graph = {};
     this.graph.nodes = [];
     this.graph.links = [];
+    this.graph.workspace=this.workspaceCurrent;
 
 
     var inputs = 0;
@@ -445,31 +435,27 @@ function WorkspaceStore() {
   // --------------------------------------------------------------------------------
 
   this.on('workspace_collection_load', function(record) {
-    console.log('ON workspace_collection_load ||', record);
-    if (this.cancelRequire == false) {
-      this.load()
+    if (this.workspaceCollection == undefined) {
+      this.load(this.workspaceCurrent).then(data => {
+        this.trigger('workspace_collection_changed', this.workspaceCollection);
+      })
     } else {
-      this.cancelRequire = false;
-      this.select(this.workspaceCurrent);
+      this.trigger('workspace_collection_changed', this.workspaceCollection);
     }
+
+
   }); // <= workspace_collection_load
 
   // --------------------------------------------------------------------------------
 
   this.on('workspace_collection_share_load', function(record) {
-    console.log('ON workspace_collection_share_load ||', record);
-    if (this.cancelRequire == false) {
-      this.loadShareWorkspace(function() {
-        // for (workspace of this.workspaceShareCollection) {
-        //   workspace.components = this.workspaceBusiness.connectWorkspaceComponent(workspace.components);
-        //   console.log()
-        // }
 
+    if (this.workspaceShareCollection == undefined) {
+      this.loadShareWorkspace(this.workspaceCurrent).then(data => {
         this.trigger('workspace_share_collection_changed', this.workspaceShareCollection);
-      }.bind(this));
+      })
     } else {
-      this.cancelRequire = false;
-      this.select(this.workspaceCurrent);
+      this.trigger('workspace_share_collection_changed', this.workspaceShareCollection);
     }
   }); // <= workspace_collection_share_load
 
@@ -514,6 +500,9 @@ function WorkspaceStore() {
     this.trigger('workspace_current_changed', this.workspaceCurrent);
   }); // <= workspace_current_updateField
 
+
+
+
   // --------------------------------------------------------------------------------
 
   this.on('workspace_current_select', function(record) {
@@ -525,6 +514,24 @@ function WorkspaceStore() {
     })
   }); // <= workspace_current_select
 
+
+  this.on('navigation', function(entity, id, action) {
+    //console.log('WARNING');
+    if (entity == "workspace") {
+      console.log('ALLO');
+      if (this.workspaceCurrent != undefined && this.workspaceCurrent._id == id) {
+        this.action = action;
+        this.trigger('navigation_control_done', entity,action);
+      } else {
+        this.select({
+          _id: id
+        }).then(workspace => {
+          this.action = action;
+          this.trigger('navigation_control_done', entity,action);
+        });
+      }
+    }
+  });
   // --------------------------------------------------------------------------------
 
   this.on('workspace_current_cancel', function(record) {
@@ -562,8 +569,8 @@ function WorkspaceStore() {
 
 
   this.on('workspace_current_refresh', function() {
-    console.log('workspace_current_refresh || ', this.workspaceCurrent, this.menu);
-    this.trigger('workspace_editor_menu_changed', this.menu);
+    //console.log('workspace_current_refresh || ', this.workspaceCurrent);
+    this.trigger('workspace_editor_menu_changed', this.action);
     this.trigger('workspace_current_changed', this.workspaceCurrent);
   }); // <= workspace_current_refresh
 
@@ -583,19 +590,19 @@ function WorkspaceStore() {
   }.bind(this)); // <= workspace_current_persist
 
 
-  RiotControl.on('persistClick', function (data) {
-    console.log("WORKSPACE STORE PERSIST START");
-    this.componentView = true;
-    this.userView = true;
-    this.DescriptionView = true;
-    RiotControl.trigger('workspace_current_updateField', {
-      field: 'name',
-      data: data.name
-    });
-    RiotControl.trigger('workspace_current_updateField', {
-      field: 'description',
-      data: data.description
-    });
+  RiotControl.on('persistClick', function(data) {
+    // console.log("WORKSPACE STORE PERSIST START");
+    // this.componentView = true;
+    // this.userView = true;
+    // this.DescriptionView = true;
+    // RiotControl.trigger('workspace_current_updateField', {
+    //   field: 'name',
+    //   data: data.name
+    // });
+    // RiotControl.trigger('workspace_current_updateField', {
+    //   field: 'description',
+    //   data: data.description
+    // });
     RiotControl.trigger('workspace_current_persist');
   }.bind(this));
 
@@ -613,20 +620,25 @@ function WorkspaceStore() {
   //   // })
   //   this.trigger('save_auto')
   // });
-
-  this.on('workspace_current_add_components', function(data) {
-    console.log("workspace store");
-    data.forEach(c => {
+  this.on('set_componentSelectedToAdd', function(message) {
+    //console.log('set_componentSelectedToAdd',message);
+    this.componentSelectedToAdd=message;
+  }); // <= workspace_current_updateField
+  this.on('workspace_current_add_components', function() {
+    console.log("workspace_current_add_components",this.componentSelectedToAdd);
+    this.componentSelectedToAdd.forEach(c => {
       c.workspaceId = this.workspaceCurrent._id;
       c.specificData = {};
       c.connectionsBefore = [];
       c.connectionsAfter = []
       c.consumption_history = {}
       this.workspaceCurrent.components.push(c);
-    }) 
+    })
+    this.componentSelectedToAdd=[];
 
     this.update(this.workspaceCurrent).then(data => {
-      this.trigger('workspace_current_add_components_done');
+      this.trigger('workspace_current_add_components_done',this.workspaceCurrent);
+      //route('workspace/'+this.workspaceCurrent+'/component')
     })
   }.bind(this));
 
@@ -686,13 +698,19 @@ function WorkspaceStore() {
   // }); //<= own_all_workspace
 
   ///GESTION DES DROIT DE USER
+  this.on('set-email-to-share',function(email){
+    this.emailToShare=email;
+  })
 
   this.on('share-workspace', function(data) {
     console.log('share-workspace |', data, localStorage.token);
     $.ajax({
       method: 'put',
       url: '../data/core/share/workspace/',
-      data: JSON.stringify(data),
+      data: JSON.stringify({
+        email: this.emailToShare,
+        worksapce_id: this.workspaceCurrent._id
+      }),
       headers: {
         "Authorization": "JTW" + " " + localStorage.token
       },
@@ -707,8 +725,10 @@ function WorkspaceStore() {
       } else if (data == "already") {
         this.trigger('share_change_already')
       } else {
-        this.userCurrrent = data,
-        console.log('share-workspace', data);
+        //this.userCurrrent = data,
+        //console.log('share-workspace', data);
+        this.workspaceBusiness.connectWorkspaceComponent(data.workspace.components);
+        this.workspaceCurrent=data.workspace;
         this.trigger('share_change', {
           user: data.user,
           workspace: data.workspace

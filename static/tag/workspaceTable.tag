@@ -13,9 +13,10 @@
   <script>
 
     this.refreshZenTable = function (data) {
-      //console.log("refreshZenTable", data)
+      console.log("refreshZenTable", data)
       this.tags.zentable.data = data;
       this.data = data
+      this.update();
     }.bind(this);
 
 
@@ -38,7 +39,8 @@
     this.on('mount', function (args) {
       this.tags.zentable.on('rowNavigation', function (data) {
         console.log("rowNavigation", data);
-        RiotControl.trigger('workspace_current_select', data);
+        //RiotControl.trigger('workspace_current_select', data);
+        route('workspace/'+data._id+'/component');
       }.bind(this));
       RiotControl.on("store_filterCards", this.filterSearch)
       RiotControl.on('store_addRowWorkspace',this.addRow);

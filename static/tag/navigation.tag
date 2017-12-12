@@ -269,12 +269,12 @@
       this.entity = undefined;
       this.update(); // unmount existing screen
       this.entity = entity;
-      this.action=action;
+      this.action = action;
       this.update();
     }.bind(this));
 
     this.on('mount', function () {
-      this.router = route.create()
+      //this.router = route.create()
       route(function (entity, id, action) {
         console.log(entity, id, action);
         //this.routePath=path; this.routeHistory=history;
@@ -289,7 +289,6 @@
       }.bind(this));
       route.start(true);
       //RiotControl.trigger('screenHistoryInit');
-
     });
   </script>
   <style>

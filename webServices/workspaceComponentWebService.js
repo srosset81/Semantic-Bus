@@ -1,4 +1,7 @@
-module.exports = function(router) {
+module.exports = function(router,stompClient) {
+  //TODO Ugly
+  this.stompClient=stompClient;
+  //this.stompClient = stompClient;
 
   var recursivPullResolvePromise = require('./recursivPullResolvePromise');
   var workspaceComponentPromise = require('./workspaceComponentPromise.js');
@@ -23,6 +26,8 @@ module.exports = function(router) {
       return recursivPullResolvePromise.getNewInstance().resolveComponentPull(data, false).then(function(data) {
       //console.log("IN WORKSPACE COMPONENT RETURN DATA |", data)
       res.json(data.data);
+      //this.stompClient.message...
+
     }).catch(e => {
       console.log("IN ERROR WEB SERVICE",e)
       next(e);
@@ -44,12 +49,36 @@ module.exports = function(router) {
       return recursivPullResolvePromiseDynamic.getNewInstance().resolveComponent(data, 'work');
     }).then(function(data) {
       //console.log("IN WORKSPACE COMPONENT RETURN DATA |", data)
+
       res.json(data.data);
     }).catch(e => {
       console.log("IN ERROR WEB SERVICE",e.message)
         next(e);
     });
-  }); //<= resolveComponent
+  }.bind(this)); //<= resolveComponent
+
+
+  stompClient.subscribe('/queue/work-ask', message=>{
+    let body=JSON.parse(message.body);
+    console.log('body', body);
+    //this.stompClient.send('/topic/work-response', JSON.stringify({message:'AJAX va prendre cher'}));
+    //console.log('WORK');
+    var id = body.id;
+    workspace_component_lib.get({
+      _id: id
+    }).then(function(data) {
+      //console.log('workspaceComponent | work| ', data);
+      var recursivPullResolvePromiseDynamic = require('./recursivPullResolvePromise');
+      return recursivPullResolvePromiseDynamic.getNewInstance().resolveComponent(data, 'work');
+    }).then(function(data) {
+      //console.log("IN WORKSPACE COMPONENT RETURN DATA |", data)
+
+      this.stompClient.send('/topic/work-response', JSON.stringify({data:data}));
+
+    }).catch(e => {
+        this.stompClient.send('/topic/work-response', JSON.stringify({error:e}));
+    });
+  });
 
   // --------------------------------------------------------------------------------
 

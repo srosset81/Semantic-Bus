@@ -106,9 +106,11 @@ httpGet.makeRequest('GET', {
       //   console.log('message', JSON.parse(message.body));
       //   stompClient.send('/topic/work-response', JSON.stringify({message:'AJAX va prendre cher'}));
       // }
-      amqp.connect(url+'/'+env.AMQPHOST, function(err, conn) {
-        console.log('AMQP connected');
+      console.log(amqp)
+      amqp.connect(url+'/'+ env.AMQPHOST, function(err, conn) {
+        console.log('AMQP connected',err, conn);
         conn.createChannel(function(err, ch) {
+          console.log('AMQP connected 2',err);
           onConnect(ch);
           console.log('channel created');
           ch.assertQueue('work-ask', {durable: true});

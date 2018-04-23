@@ -310,6 +310,18 @@ function WorkspaceStore(utilStore, stompClient, specificStoreList) {
 
   this.computeGraph = function(viewBox) {
     //console.log('COMPUTE');
+    let componentsId = this.workspaceCurrent.components.map(c => c._id);
+    this.workspaceCurrent.links = sift({
+      $and: [{
+        source: {
+          $in: componentsId
+        }
+      }, {
+        target: {
+          $in: componentsId
+        }
+      }]
+    }, this.workspaceCurrent.links)
     if (viewBox) {
       this.viewBox = viewBox;
     }
@@ -830,11 +842,11 @@ function WorkspaceStore(utilStore, stompClient, specificStoreList) {
               let errorNB = sift({
                 status: 'error'
               }, process.steps).length;
-              if (waitingNB > 0) {
-                process.status = 'waiting';
+              if (errorNB > 0) {
+                process.status = 'error';
               } else {
-                if(errorNB>0){
-                  process.status = 'error';
+                if(waitingNB>0){
+                  process.status = 'waiting';
                 }else{
                   process.status = 'resolved';
                 }
@@ -1135,7 +1147,7 @@ function WorkspaceStore(utilStore, stompClient, specificStoreList) {
         target: target._id
       }),
     }, true).then(links => {
-      //console.log('connectedComps', connectedComps);
+      console.log('connectedComps', links);
       // source.connectionsAfter.push(connectedComps.target);
       // target.connectionsBefore.push(connectedComps.source);
       // this.workspaceBusiness.connectWorkspaceComponent(this.workspaceCurrent.components);
@@ -1167,7 +1179,7 @@ function WorkspaceStore(utilStore, stompClient, specificStoreList) {
         linkId: link._id,
       }),
     }, true).then(links => {
-      //console.log('connectedComps',disconnectedComps);
+      console.log('connectedComps',links);
       this.workspaceCurrent.links = links;
       this.trigger('workspace_current_changed', this.workspaceCurrent);
       if (this.viewBox) {

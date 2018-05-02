@@ -1,11 +1,12 @@
+"use strict";
 module.exports = {
   type: 'Google geolocaliser',
   description: 'interoge l api google geocode pour transo une adresse en latitude et longitude',
   editor: 'google-geolocaliser-editor',
   url: require('url'),
   https: require('https'),
-  graphIcon:'googleGeolocaliser.png',
-  tags:[
+  graphIcon: 'googleGeolocaliser.png',
+  tags: [
     'http://semantic-bus.org/data/tags/middleComponents',
     'http://semantic-bus.org/data/tags/middleGeocodeComponents'
   ],
@@ -13,21 +14,28 @@ module.exports = {
     return entity;
   },
 
-  getPriceState: function(specificData, moPrice, recordPrice){
-      if(specificData.googleToken != null){
-        return {moPrice:moPrice,recordPrice:0};
-      }else {
-        return {moPrice:moPrice,recordPrice:recordPrice};
-      }
+  getPriceState: function(specificData, moPrice, recordPrice) {
+    if (specificData.googleToken != null) {
+      return {
+        moPrice: moPrice,
+        recordPrice: 0
+      };
+    } else {
+      return {
+        moPrice: moPrice,
+        recordPrice: recordPrice
+      };
+    }
   },
   geoLocalise: function(source, specificData) {
 
     return new Promise((resolve, reject) => {
 
       var goePromises = [];
+      //var errorArray = [];
 
 
-      for (record of source) {
+      for (let record of source) {
         var address = {
           street: record[specificData.streetPath],
           town: record[specificData.townPath],
@@ -38,7 +46,7 @@ module.exports = {
         goePromises.push(
           new Promise((resolve, reject) => {
 
-            var apiKey = 'AIzaSyBAg94NXmqVLFeIWGBcQ4cweA7YXC3ndLI'
+            var apiKey = 'AIzaSyBJElsvbr_6obYaeTd2oOyiEd97XjSNyY8'
             //var apiKey = 'AIzaSyAGHo04gqJWKF8uVYhsWVRY_zo61YtemMQ'
             var addressGoogleFormated = 'address='
             addressGoogleFormated = addressGoogleFormated + (address.street ? address.street + ',+' : '');
@@ -47,7 +55,7 @@ module.exports = {
             addressGoogleFormated = addressGoogleFormated + (address.country ? address.country + ',+' : '');
             var urlString = 'https://maps.googleapis.com/maps/api/geocode/json?';
             urlString = urlString + addressGoogleFormated;
-            urlString = urlString + '&key='+apiKey;
+            urlString = urlString + '&key=' + apiKey;
 
             //console.log('geoLocalise | urlString |', urlString);
 
@@ -55,18 +63,20 @@ module.exports = {
             //console.log('REST Get JSON | makerequest | port',parsedUrl.port);
             //  console.log('REST Get JSON | makerequest | host',parsedUrl.hostname);
             const requestOptions = {
-                hostname: parsedUrl.hostname,
-                path: parsedUrl.path,
-                port: parsedUrl.port,
-                method: 'GET'
-              }
-              //          console.log(requestOptions);
+              hostname: parsedUrl.hostname,
+              path: parsedUrl.path,
+              port: parsedUrl.port,
+              method: 'GET'
+            }
+            //          console.log(requestOptions);
             const request = this.https.request(requestOptions, response => {
               const hasResponseFailed = response.status >= 400;
               var responseBody = '';
 
               if (hasResponseFailed) {
-                reject(`Request to ${response.url} failed with HTTP ${response.status}`);
+                //errorArray.push(new Error(`Request to ${response.url} failed with HTTP ${response.status}`))
+                reject(new Error(`Request to ${response.url} failed with HTTP ${response.status}`));
+
               }
 
               /* the response stream's (an instance of Stream) current data. See:
@@ -78,8 +88,17 @@ module.exports = {
 
               // once all the data has been read, resolve the Promise
               response.on('end', () => {
-                //console.log(responseBody);
-                resolve(JSON.parse(responseBody));
+                let responseBodyObject = JSON.parse(responseBody);
+                //console.log(responseBodyObject);
+                if (responseBodyObject.error_message == undefined) {
+                  resolve(JSON.parse(responseBody));
+                } else {
+                  // console.log(responseBodyObject.error_message);
+                  // errorArray.push(new Error(responseBodyObject.error_message))
+                  reject(new Error(responseBodyObject.error_message));
+                }
+
+
               });
             });
 
@@ -92,7 +111,8 @@ module.exports = {
       }
 
       Promise.all(goePromises).then(geoLocalisations => {
-        var result= [];
+
+        var result = [];
         //console.log('geoLocalise | geoLocalisations result |', geoLocalisations);
         for (var geoLocalisationKey in geoLocalisations) {
           //        console.log('geoLocalise | geoLocalisations line |',geoLocalisations[geoLocalisationKey].results[0].geometry.location);
@@ -101,12 +121,17 @@ module.exports = {
             record[specificData.latitudePath] = geoLocalisations[geoLocalisationKey].results[0].geometry.location.lat;
             record[specificData.longitudePath] = geoLocalisations[geoLocalisationKey].results[0].geometry.location.lng;
             result.push(record);
-          }else{
+          } else {
             //console.log('google geocode failed');
           }
         }
 
-        resolve({data:result});
+        resolve({
+          data: result
+        });
+      }).catch(err => {
+        //console.log('ALL ERROR', errorArray);
+        reject(err)
       });
 
     })

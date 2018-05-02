@@ -26,7 +26,9 @@ module.exports = {
 
     console.log('workspaces import');
     workspaceModelTarget.remove({}).then(message => {
-      workspaceModelSource.find({}).exec((err, WSToImport) => {
+      workspaceModelSource.find({},{
+          'consumption_history': 0
+        }).exec((err, WSToImport) => {
         workspaceModelTarget.insertMany(WSToImport, (error, docs) => {
           //console.log(error);
           console.log('workspaces inserted', docs.length);
@@ -51,10 +53,11 @@ module.exports = {
       });
     });
 
-
     console.log('workspaces component import');
     workspaceComponentModelTarget.remove({}).then(message => {
-      workspaceComponentModelSource.find({}).exec((err, WSToImport) => {
+      workspaceComponentModelSource.find({},{
+          'consumption_history': 0
+        }).exec((err, WSToImport) => {
         workspaceComponentModelTarget.insertMany(WSToImport, (error, docs) => {
           console.log(error);
           console.log('workspaces component inserted', docs.length);
@@ -62,9 +65,5 @@ module.exports = {
         });
       });
     });
-
-
-
-
   },
 }

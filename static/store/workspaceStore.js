@@ -1,4 +1,4 @@
-function WorkspaceStore(utilStore) {
+function WorkspaceStore(utilStore, stompClient, specificStoreList) {
 
 
   // --------------------------------------------------------------------------------
@@ -7,6 +7,11 @@ function WorkspaceStore(utilStore) {
 
 
   riot.observable(this);
+  for (specificStore of specificStoreList) {
+    specificStore.genericStore = this;
+  }
+
+
   this.globalWorkspaceCollection;
   this.workspaceCollection;
   this.workspaceShareCollection;
@@ -16,7 +21,16 @@ function WorkspaceStore(utilStore) {
   //this.cancelRequire = false;
   this.modeConnectBefore = false;
   this.modeConnectAfter = false;
-  this.utilStore=utilStore;
+  this.utilStore = utilStore;
+  this.stompClient = stompClient;
+  this.processCollection = [];
+  this.currentProcess = undefined;
+
+  this.itemCurrent;
+  this.connectMode;
+  this.modeConnectBefore = false;
+  this.modeConnectAfter = false;
+
 
 
   // --------------------------------------------------------------------------------
@@ -115,9 +129,10 @@ function WorkspaceStore(utilStore) {
   // --------------------------------------------------------------------------------
   //TODO passer par le proxy client
   this.update = function(data) {
-    console.log("data update", data)
+    //console.log("data update", data)
     return new Promise((resolve, reject) => {
       var ajax_data = JSON.stringify(this.workspaceBusiness.serialiseWorkspace(this.workspaceCurrent))
+      //console.log('ajax_data',ajax_data);
       this.trigger('persist_start');
       $.ajax({
         method: 'put',
@@ -223,24 +238,24 @@ function WorkspaceStore(utilStore) {
 
   // --------------------------------------------------------------------------------
 
-  this.on('load_workspace_graph', function (data) {
+  this.on('load_workspace_graph', function(data) {
     console.log('show_WORKSPACE GRAPH', data);
-      // console.log(localStorage.user_id);
-      $.ajax({
-        method: 'get',
-        url: '../data/core/workspace/' + data._id + '/graph',
-        headers: {
-          "Authorization": "JTW" + " " + localStorage.token
-        },
-        contentType: 'application/json'
-      }).done(function (data) {
-        console.log("WORKSPACE LOADED", data)
-        this.trigger('graph_workspace_data_loaded', data)
-        // this.setUserCurrent(data);
-        // this.userCurrrent = data;
-        // console.log("load profil |", this.userCurrrent);
+    // console.log(localStorage.user_id);
+    $.ajax({
+      method: 'get',
+      url: '../data/core/workspace/' + data._id + '/graph',
+      headers: {
+        "Authorization": "JTW" + " " + localStorage.token
+      },
+      contentType: 'application/json'
+    }).done(function(data) {
+      console.log("WORKSPACE LOADED", data)
+      this.trigger('graph_workspace_data_loaded', data)
+      // this.setUserCurrent(data);
+      // this.userCurrrent = data;
+      // console.log("load profil |", this.userCurrrent);
       // this.trigger('profil_menu_changed', this.menu);
-      }.bind(this))
+    }.bind(this))
   })
 
 
@@ -273,17 +288,17 @@ function WorkspaceStore(utilStore) {
   // --------------------------------------------------------------------------------
 
   this.select = function(record) {
+
     return new Promise((resolve, reject) => {
       this.utilStore.ajaxCall({
         method: 'get',
         url: '../data/core/workspace/' + record._id
       }, true).then(data => {
-        console.log(data);
+        //console.log(data);
         this.workspaceBusiness.connectWorkspaceComponent(data.components);
         this.workspaceCurrent = data;
         this.workspaceCurrent.mode = 'edit';
         this.menu = 'component'
-        //this.workspaceCurrent.synchronized =true;
         resolve(data);
       }).catch(error => {
         reject(error);
@@ -294,6 +309,19 @@ function WorkspaceStore(utilStore) {
   }; // <= select
 
   this.computeGraph = function(viewBox) {
+    //console.log('COMPUTE');
+    let componentsId = this.workspaceCurrent.components.map(c => c._id);
+    this.workspaceCurrent.links = sift({
+      $and: [{
+        source: {
+          $in: componentsId
+        }
+      }, {
+        target: {
+          $in: componentsId
+        }
+      }]
+    }, this.workspaceCurrent.links)
     if (viewBox) {
       this.viewBox = viewBox;
     }
@@ -330,16 +358,25 @@ function WorkspaceStore(utilStore) {
     var middles = 0;
 
     // determine le nombre d inputs et d outputs
-    console.log(this.workspaceCurrent.components);
+    //console.log(this.workspaceCurrent.components);
     for (record of this.workspaceCurrent.components) {
-      if (record.connectionsBefore.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) {
+      let connectionsBefore = sift({
+        target: record._id
+      }, this.workspaceCurrent.links);
+      let connectionsAfter = sift({
+        source: record._id
+      }, this.workspaceCurrent.links);
+      //console.log('connections', connectionsBefore, connectionsAfter);
+      if (connectionsBefore.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) {
         inputs++;
-      } else if (record.connectionsAfter.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) {
+      } else if (connectionsAfter.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) {
         outputs++;
       } else if (record.graphPositionX == undefined && record.graphPositionY == undefined) {
         middles++;
       }
     }
+
+    //console.log('counts', inputs, outputs, middles);
 
     // console.log(inputs, outputs); calcule une distance type pour positionner les inputs et outputs du graphe
     var inputsOffset = this.viewBox.height / (inputs + 1);
@@ -355,38 +392,38 @@ function WorkspaceStore(utilStore) {
     //console.log(inputsOffset, outputsOffset);
 
     for (record of this.workspaceCurrent.components) {
-      var node = {};
-      if (record.connectionsBefore.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) { // si rien n est connecte avant
-        node = {
-          text: record.type, //-
-          id: record._id,
-          graphIcon: record.graphIcon,
-          // fx: record.graphPositionX || 10, //positionne l'élémént sur le bord gauche fy: record.graphPositionY || inputCurrentOffset,
-          x: 30, //positionne l'élémént sur le bord gauche
-          y: inputCurrentOffset,
-          component: record
+      let connectionsBefore = sift({
+        target: record._id
+      }, this.workspaceCurrent.links);
+      let connectionsAfter = sift({
+        source: record._id
+      }, this.workspaceCurrent.links);
+      var node = {
+        text: record.type,
+        id: record._id,
+        graphIcon: record.graphIcon,
+        component: record
+      };
+      if (this.currentProcess != undefined) {
+        //console.log('Status SET',record._id,this.currentProcess.steps);
+        let step = sift({
+          componentId: record._id
+        }, this.currentProcess.steps)[0];
+        if (step != undefined) {
+          node.status = step.status;
         }
+      }
+      if (connectionsBefore.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) { // si rien n est connecte avant
+        node.x = 30;
+        node.y = inputCurrentOffset;
         inputCurrentOffset += inputsOffset;
-      } else if (record.connectionsAfter.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) {
-        node = {
-          text: record.type,
-          id: record._id,
-          graphIcon: record.graphIcon,
-          // fx: record.graphPositionX || width - 10 - record.type.length * 10, // positionne l'element en largeur par rapport au bord droit du graphe fy: record.graphPositionY || outputCurrentOffset,
-          x: this.viewBox.width - 250, // positionne l'element en largeur par rapport au bord droit du graphe
-          y: outputCurrentOffset,
-          component: record
-        }
+      } else if (connectionsAfter.length == 0 && record.graphPositionX == undefined && record.graphPositionY == undefined) {
+        node.x = this.viewBox.width - 250;
+        node.y = outputCurrentOffset;
         outputCurrentOffset += outputsOffset;
       } else { // tous ceux du milieu
-        node = {
-          text: record.type,
-          id: record._id,
-          graphIcon: record.graphIcon,
-          x: record.graphPositionX || this.viewBox.width / 2,
-          y: record.graphPositionY || middleCurrentOffset,
-          component: record
-        }
+        node.x = record.graphPositionX || this.viewBox.width / 2;
+        node.y = record.graphPositionY || middleCurrentOffset;
         if (record.graphPositionY == undefined) {
           middleCurrentOffset += middlesOffset;
         }
@@ -396,25 +433,38 @@ function WorkspaceStore(utilStore) {
         node.selected = true;
       }
       this.graph.nodes.push(node);
+      //console.log(this.graph.nodes);
     }
 
-    for (record of this.workspaceCurrent.components) {
-      for (connection of record.connectionsAfter) {
-        let id = record._id + '-' + connection._id;
-        this.graph.links.push({
-          source: sift({
-            id: record._id
-          }, this.graph.nodes)[0],
-          target: sift({
-            id: connection._id
-          }, this.graph.nodes)[0],
-          id: id,
-          selected: selectedLinks.indexOf(id) != -1
-        }) // creation de tous les links
-      }
+    for (link of this.workspaceCurrent.links) {
+      let id = link._id;
+      this.graph.links.push({
+        source: sift({
+          id: link.source
+        }, this.graph.nodes)[0],
+        target: sift({
+          id: link.target
+        }, this.graph.nodes)[0],
+        id: id,
+        selected: selectedLinks.indexOf(id) != -1
+      })
+
+      // for (connection of record.connectionsAfter) {
+      //   let id = record._id + '-' + connection._id;
+      //   this.graph.links.push({
+      //     source: sift({
+      //       id: record._id
+      //     }, this.graph.nodes)[0],
+      //     target: sift({
+      //       id: connection._id
+      //     }, this.graph.nodes)[0],
+      //     id: id,
+      //     selected: selectedLinks.indexOf(id) != -1
+      //   }) // creation de tous les links
+      // }
     }
 
-    console.log(this.graph);
+    //console.log(this.graph);
     this.trigger('workspace_graph_compute_done', this.graph);
 
   }
@@ -606,7 +656,8 @@ function WorkspaceStore(utilStore) {
           name: "",
           description: "",
           components: [],
-          users: []
+          users: [],
+          links: []
         };
         this.action = action;
         this.workspaceCurrent.mode = 'init';
@@ -614,19 +665,255 @@ function WorkspaceStore(utilStore) {
       } else {
         if (this.workspaceCurrent != undefined && this.workspaceCurrent._id == id) {
           this.action = action;
+          //console.log('processCollection Nav',this.processCollection.map(r=>r._id));
+          this.trigger('workspace_current_process_changed', this.processCollection);
           this.trigger('navigation_control_done', entity, action);
         } else {
+          if (this.subscription_workspace_current_move_component != undefined) {
+            this.subscription_workspace_current_move_component.unsubscribe();
+          }
+          if (this.subscription_workspace_current_updateComponentField != undefined) {
+            this.subscription_workspace_current_updateComponentField.unsubscribe();
+          }
+          if (this.subscription_workspace_current_process_start != undefined) {
+            this.subscription_workspace_current_process_start.unsubscribe();
+          }
+          if (this.subscription_workspace_current_process_end != undefined) {
+            this.subscription_workspace_current_process_end.unsubscribe();
+          }
+          if (this.subscription_workspace_current_process_error != undefined) {
+            this.subscription_workspace_current_process_error.unsubscribe();
+          }
+          if (this.subscription_workspace_current_process_progress != undefined) {
+            this.subscription_workspace_current_process_progress.unsubscribe();
+          }
+          if (this.subscription_workspace_current_process_persist != undefined) {
+            this.subscription_workspace_current_process_persist.unsubscribe();
+          }
+          if (this.subscription_workflow_processCleaned != undefined) {
+            this.subscription_workflow_processCleaned.unsubscribe();
+          }
           this.select({
             _id: id
           }).then(workspace => {
             this.action = action;
+            this.subscription_workspace_current_move_component = this.stompClient.subscribe('/topic/workspace_current_move_component.' + this.workspaceCurrent._id, message => {
+              //console.log('message', JSON.parse(message.body));
+              let body = JSON.parse(message.body);
+              if (body.token != localStorage.token) {
+                let componentToUpdate = sift({
+                  _id: body.componentId
+                }, this.workspaceCurrent.components)[0];
+                componentToUpdate.graphPositionX = body.x;
+                componentToUpdate.graphPositionY = body.y;
+                this.computeGraph();
+              }
+            });
+            this.subscription_workspace_current_updateComponentField = this.stompClient.subscribe('/topic/workspace_current_updateComponentField.' + this.workspaceCurrent._id, message => {
+              console.log('message', JSON.parse(message.body));
+              let body = JSON.parse(message.body);
+              if (body.token != localStorage.token) {
+                //console.log('body',body);
+                let updatingComponent = sift({
+                  _id: body.componentId
+                }, this.workspaceCurrent.components)[0];
+                utilStore.objectSetFieldValue(updatingComponent, body.field, body.data);
+                //this.itemCurrent.specificData[body.field] = body.data;
+                //console.log('this.itemCurrent',this.itemCurrent);
+                if (this.itemCurrent._id == updatingComponent._id) {
+                  this.trigger('item_current_changed', updatingComponent);
+                }
+              }
+            });
+            this.subscription_workspace_current_process_start = this.stompClient.subscribe('/topic/process-start.' + this.workspaceCurrent._id, message => {
+              //console.log('message', JSON.parse(message.body));
+              let body = JSON.parse(message.body);
+              if (body.error == undefined) {
+                let process = {
+                  _id: body._id,
+                  status: 'processing',
+                  steps: body.steps,
+                  timeStamp: body.timeStamp,
+                  stepFinished: 0
+                }
+                this.processCollection.unshift(process);
+                if (body.callerId == localStorage.user_id) {
+                  //console.log('IT IS ME');
+                  this.currentProcess = process;
+                  this.computeGraph();
+                }
+                this.trigger('workspace_current_process_changed', this.processCollection);
+              } else {
+                this.trigger('ajax_fail', body.error);
+              }
+            });
+            this.subscription_workspace_current_process_end = this.stompClient.subscribe('/topic/process-end.' + this.workspaceCurrent._id, message => {
+              //console.log('message', JSON.parse(message.body));
+              let body = JSON.parse(message.body);
+              if (body.error == undefined) {
+                let targetProcess = sift({
+                  _id: body._id
+                }, this.processCollection)[0];
+                console.log(targetProcess);
+                if (targetProcess != undefined) {
+                  targetProcess.status = 'resolved';
+                  this.trigger('workspace_current_process_changed', this.processCollection);
+                }
+              } else {
+                this.trigger('ajax_fail', body.error);
+              }
+            });
+            this.subscription_workspace_current_process_error = this.stompClient.subscribe('/topic/process-error.' + this.workspaceCurrent._id, message => {
+              //console.log('message', JSON.parse(message.body));
+              let body = JSON.parse(message.body);
+              if (body.error == undefined) {
+                let targetProcess = sift({
+                  _id: body._id
+                }, this.processCollection)[0];
+                if (targetProcess != undefined) {
+                  targetProcess.status = 'error';
+                  this.trigger('workspace_current_process_changed', this.processCollection);
+                }
+              } else {
+                this.trigger('ajax_fail', body.error);
+              }
+            });
+            this.subscription_workspace_current_process_progress = this.stompClient.subscribe('/topic/process-progress.' + this.workspaceCurrent._id, message => {
+              console.log('message', JSON.parse(message.body));
+
+              let body = JSON.parse(message.body);
+
+              // if (body.error == undefined) {
+              let targetProcess = sift({
+                _id: body.processId
+              }, this.processCollection)[0];
+
+              if (targetProcess != undefined) {
+                //console.log('process Finded');
+                let targetStep = sift({
+                  componentId: body.componentId
+                }, targetProcess.steps)[0];
+                if (targetStep != undefined) {
+                  //console.log('step Finded');
+                  if (body.error == undefined) {
+                    targetStep.status = 'resolved';
+                  } else {
+                    targetStep.status = 'error';
+                    //  targetProcess.status = 'error';
+                  }
+                }
+                targetProcess.stepFinished = sift({
+                  status: {
+                    '$ne': 'waiting'
+                  }
+                }, targetProcess.steps).length
+                this.trigger('workspace_current_process_changed', this.processCollection);
+                //console.log('ALLO',this.currentProcessId,body.processId);
+                if (this.currentProcess && this.currentProcess._id == body.processId) {
+                  //console.log('ALLO2');
+                  this.computeGraph();
+                }
+              }
+              //console.log(this.processCollection);
+              // } else {
+              //   this.trigger('ajax_fail', body.error);
+              // }
+            });
+            this.subscription_workflow_processCleaned = this.stompClient.subscribe('/topic/workflow-processCleaned.' + this.workspaceCurrent._id, message => {
+              let body = JSON.parse(message.body);
+              this.processCollection = sift({
+                  _id: {
+                    $in: body.cleanedProcesses.map(p => p._id)
+                  }
+                },
+                this.processCollection
+              );
+              this.trigger('workspace_current_process_changed', this.processCollection);
+            });
+            this.subscription_workspace_current_process_persist = this.stompClient.subscribe('/topic/process-persist.' + this.workspaceCurrent._id, message => {
+              console.log('message', JSON.parse(message.body));
+              let body = JSON.parse(message.body);
+              console.log(this.currentProcess._id,body.processId,this.itemCurrent._id,body.componentId);
+              if (this.currentProcess._id == body.processId && this.itemCurrent._id == body.componentId) {
+                this.trigger('item_current_process_persist_changed', body.data);
+              }
+            });
+
+
             this.trigger('navigation_control_done', entity, action);
+          });
+          this.utilStore.ajaxCall({
+            method: 'get',
+            url: '../data/core/processByWorkflow/' + id
+          }, true).then(data => {
+            this.processCollection = data;
+
+            this.processCollection.forEach(process => {
+              let waitingNB = sift({
+                status: 'waiting'
+              }, process.steps).length;
+              let errorNB = sift({
+                status: 'error'
+              }, process.steps).length;
+              if (errorNB > 0) {
+                process.status = 'error';
+              } else {
+                if (waitingNB > 0) {
+                  process.status = 'waiting';
+                } else {
+                  process.status = 'resolved';
+                }
+              }
+              process.stepFinished = process.steps.length - waitingNB;
+            });
+
+            this.trigger('workspace_current_process_changed', this.processCollection);
           });
         }
       }
     }
   });
-  // --------------------------------------------------------------------------------
+
+  this.on('item_current_work', function(message) {
+    this.stompClient.send('/queue/work-ask', JSON.stringify({
+      id: this.itemCurrent._id,
+      workspaceId: this.itemCurrent.workspaceId,
+      callerId: localStorage.user_id
+    }));
+  }); //<= item_current_work
+
+  // this.on('process_state', (processId) => {
+  //   //console.log(processId);
+  //   this.utilStore.ajaxCall({
+  //     method: 'get',
+  //     url: '../data/core/processState/' + processId
+  //   }, true).then(data => {
+  //     for (let component of data) {
+  //       let componentOfWorkspace = sift({
+  //         _id: component.componentId
+  //       }, this.workspaceCurrent.components)[0];
+  //       if (componentOfWorkspace != undefined) {
+  //         componentOfWorkspace.state = component.state;
+  //       }
+  //     }
+  //     this.computeGraph();
+  //   });
+  // });
+
+  this.on('previewJSON_refresh', function() {
+    //console.log('workspace_current_refresh || ', this.workspaceCurrent);
+    this.trigger('previewJSON', this.currentPreview);
+  }); //
+  //--------------------------------------------------------------------------------
+  this.on('workspace_current_process_refresh', function() {
+    //console.log('workspace_current_refresh || ', this.workspaceCurrent);
+    this.trigger('workspace_current_process_changed', this.processCollection);
+  }); // <= workspace_current_refresh
+
+  this.on('workspace_current_process_select', function(process) {
+    this.currentProcess = process;
+    route('workspace/' + this.workspaceCurrent._id + '/component');
+  })
 
   this.on('workspace_current_cancel', function(record) {
     console.log('workspace_current_cancel ||', this.workspaceCurrent)
@@ -644,20 +931,20 @@ function WorkspaceStore(utilStore) {
 
   // --------------------------------------------------------------------------------
 
-  this.on('workspace_current_init', function() {
-    //console.log('model : workspace_current_init');
-    this.workspaceCurrent = {
-      name: "",
-      description: "",
-      components: [],
-      users: []
-    };
-    this.workspaceCurrent.mode = 'init';
-    this.menu = 'information';
-    this.trigger('workspace_current_select_done', this.workspaceCurrent);
-    //this.trigger('workspace_editor_menu_changed', this.menu);
-    //this.trigger('workspace_current_changed', this.workspaceCurrent);
-  }); // <= workspace_current_init
+  // this.on('workspace_current_init', function() {
+  //   //console.log('model : workspace_current_init');
+  //   this.workspaceCurrent = {
+  //     name: "",
+  //     description: "",
+  //     components: [],
+  //     users: []
+  //   };
+  //   this.workspaceCurrent.mode = 'init';
+  //   this.menu = 'information';
+  //   this.trigger('workspace_current_select_done', this.workspaceCurrent);
+  //   //this.trigger('workspace_editor_menu_changed', this.menu);
+  //   //this.trigger('workspace_current_changed', this.workspaceCurrent);
+  // }); // <= workspace_current_init
 
   // --------------------------------------------------------------------------------
 
@@ -723,11 +1010,13 @@ function WorkspaceStore(utilStore) {
   this.on('workspace_current_add_components', function() {
     this.utilStore.ajaxCall({
       method: 'post',
-      url: '../data/core/workspace/'+this.workspaceCurrent._id+'/addComponents',
-      data: JSON.stringify(this.componentSelectedToAdd.map((c)=>{return this.workspaceBusiness.serialiseWorkspaceComponent(c)})),
+      url: '../data/core/workspace/' + this.workspaceCurrent._id + '/addComponents',
+      data: JSON.stringify(this.componentSelectedToAdd.map((c) => {
+        return this.workspaceBusiness.serialiseWorkspaceComponent(c)
+      })),
     }, true).then(data => {
-      this.workspaceCurrent.components=this.workspaceCurrent.components.concat(data);
-      route('workspace/' + this.workspaceCurrent._id+ '/component');
+      this.workspaceCurrent.components = this.workspaceCurrent.components.concat(data);
+      route('workspace/' + this.workspaceCurrent._id + '/component');
     })
 
   }.bind(this));
@@ -758,6 +1047,17 @@ function WorkspaceStore(utilStore) {
       }
     })
   }); //<= workspace_current_delete_component
+
+  this.on('workspace_current_move_component', function(component) {
+    this.stompClient.send('/topic/workspace_current_move_component.' + this.workspaceCurrent._id, JSON.stringify({
+      componentId: component.id,
+      x: component.x,
+      y: component.y,
+      token: localStorage.token
+    }));
+  });
+
+
 
   ///GESTION DES DROIT DE USER
   this.on('set-email-to-share', function(email) {
@@ -839,23 +1139,32 @@ function WorkspaceStore(utilStore) {
 
   this.on('connect_components', function(source, target) {
     //source.connectionsAfter.push(target);
-    //target.connectionsBefore.push(source);
-    let serialised={
-      source : this.workspaceBusiness.serialiseWorkspaceComponent(source),
-      target : this.workspaceBusiness.serialiseWorkspaceComponent(target)
-    }
-    serialised.source.connectionsAfter.push({_id:target._id});
-    serialised.target.connectionsBefore.push({_id:source._id});
+    // //target.connectionsBefore.push(source);
+    // let serialised = {
+    //   source: this.workspaceBusiness.serialiseWorkspaceComponent(source),
+    //   target: this.workspaceBusiness.serialiseWorkspaceComponent(target)
+    // }
+    // serialised.source.connectionsAfter.push({
+    //   _id: target._id
+    // });
+    // serialised.target.connectionsBefore.push({
+    //   _id: source._id
+    // });
 
     this.utilStore.ajaxCall({
       method: 'post',
       url: '../data/core/workspaceComponent/connection',
-      data: JSON.stringify(serialised),
-    }, true).then(connectedComps=>{
-      console.log('connectedComps',connectedComps);
-      source.connectionsAfter.push(connectedComps.target);
-      target.connectionsBefore.push(connectedComps.source);
-      this.workspaceBusiness.connectWorkspaceComponent(this.workspaceCurrent.components);
+      data: JSON.stringify({
+        workspaceId: this.workspaceCurrent._id,
+        source: source._id,
+        target: target._id
+      }),
+    }, true).then(links => {
+      console.log('connectedComps', links);
+      // source.connectionsAfter.push(connectedComps.target);
+      // target.connectionsBefore.push(connectedComps.source);
+      // this.workspaceBusiness.connectWorkspaceComponent(this.workspaceCurrent.components);
+      this.workspaceCurrent.links = links;
       this.trigger('workspace_current_changed', this.workspaceCurrent);
       if (this.viewBox) {
         this.computeGraph();
@@ -863,22 +1172,28 @@ function WorkspaceStore(utilStore) {
     })
   });
 
-  this.on('disconnect_components', function(source, target) {
-    let serialised={
-      source : this.workspaceBusiness.serialiseWorkspaceComponent(source),
-      target : this.workspaceBusiness.serialiseWorkspaceComponent(target)
-    }
-    serialised.source.connectionsAfter.splice(serialised.source.connectionsAfter.indexOf(sift({_id:target._id},serialised.source.connectionsAfter)[0]),1);
-    serialised.target.connectionsBefore.splice(serialised.source.connectionsBefore.indexOf(sift({_id:source._id},serialised.source.connectionsBefore)[0]),1);
+  this.on('disconnect_components', function(link) {
+    // let serialised = {
+    //   source: this.workspaceBusiness.serialiseWorkspaceComponent(source),
+    //   target: this.workspaceBusiness.serialiseWorkspaceComponent(target)
+    // }
+    // serialised.source.connectionsAfter.splice(serialised.source.connectionsAfter.indexOf(sift({
+    //   _id: target._id
+    // }, serialised.source.connectionsAfter)[0]), 1);
+    // serialised.target.connectionsBefore.splice(serialised.source.connectionsBefore.indexOf(sift({
+    //   _id: source._id
+    // }, serialised.source.connectionsBefore)[0]), 1);
 
     this.utilStore.ajaxCall({
-      method: 'post',
+      method: 'delete',
       url: '../data/core/workspaceComponent/connection',
-      data: JSON.stringify(serialised),
-    }, true).then(disconnectedComps=>{
-      //console.log('connectedComps',disconnectedComps);
-      source.connectionsAfter.splice(source.connectionsAfter.indexOf(sift({_id:disconnectedComps.target._id},source.connectionsAfter)[0]),1);
-      target.connectionsBefore.splice(target.connectionsBefore.indexOf(sift({_id:disconnectedComps.source._id},target.connectionsBefore)[0]),1);
+      data: JSON.stringify({
+        workspaceId: this.workspaceCurrent._id,
+        linkId: link.id,
+      }),
+    }, true).then(links => {
+      console.log('connectedComps', links);
+      this.workspaceCurrent.links = links;
       this.trigger('workspace_current_changed', this.workspaceCurrent);
       if (this.viewBox) {
         this.computeGraph();
@@ -922,6 +1237,165 @@ function WorkspaceStore(utilStore) {
     this.menu = menu;
     this.trigger('workspace_editor_menu_changed', this.menu);
   });
+
+  //-----------------------------------  COMPONENT
+
+
+  this.updateComponent = function() {
+    return new Promise((resolve, reject) => {
+      utilStore.ajaxCall({
+        method: 'put',
+        url: '../data/core/workspaceComponent',
+        data: JSON.stringify(this.workspaceBusiness.serialiseWorkspaceComponent(this.itemCurrent)),
+      }, true).then(data => {
+        this.itemCurrent = data;
+        //this.trigger('item_current_persist_done', this.itemCurrent);
+        resolve(this.itemCurrent);
+      }).catch(error => {
+        reject(error);
+      });
+    });
+  }; //<= update
+
+  // --------------------------------------------------------------------------------
+
+  this.persistComponent = function() {
+    console.log('GenericStore || persist', this.itemCurrent);
+    this.updateComponent().then(data => {
+      route('workspace/' + data.workspaceId + '/component')
+    })
+  } //<= persist
+
+
+
+
+  this.on('item_current_updateField', function(message) {
+    console.log('item_current_updateField ', message);
+    utilStore.objectSetFieldValue(this.itemCurrent, message.field, message.data);
+    //this.itemCurrent[message.field] = message.data;
+    this.trigger('item_current_changed', this.itemCurrent);
+    this.stompClient.send('/topic/workspace_current_updateComponentField.' + this.workspaceCurrent._id, JSON.stringify({
+      field: message.field,
+      data: message.data,
+      componentId: this.itemCurrent._id,
+      token: localStorage.token
+    }));
+  }); //<= item_current_updateField
+
+  // --------------------------------------------------------------------------------
+
+
+
+  this.on('item_current_persist', function(message) {
+    console.log('item_current_persist', this.workspaceBusiness.serialiseWorkspaceComponent(this.itemCurrent));
+    this.persistComponent();
+  }); //<=  item_current_persist
+
+  this.on('component_preview', () => {
+    //console.log('component_preview', this.itemCurrent._id, this.currentProcess.processId);
+    this.utilStore.ajaxCall({
+      method: 'get',
+      url: '../data/core/componentData/' + this.itemCurrent._id + '/' + this.currentProcess._id
+    }, true).then(data => {
+      this.currentPreview = data;
+      //console.log('DATA',data);
+      this.trigger('process_result', this.currentPreview);
+    })
+  });
+
+  this.on('item_current_cancel', function(data) {
+    console.log('item_current_cancel :', this.itemCurrent);
+    if (this.itemCurrent) {
+      this.itemCurrent.mode = undefined;
+    }
+  });
+
+  this.computeAvailableConnetions = function() {
+    let beforeConnectionAvailable = sift({
+      $and: [{
+        _id: {
+          $nin: this.itemCurrent.connectionsBefore.map(c => c._id)
+        }
+      }, {
+        _id: {
+          $ne: this.itemCurrent._id
+        }
+      }]
+      //workspace of component should filled but is'nt (should be filled in workspace load/deserialized)
+    }, this.workspaceCurrent.components);
+
+    let afterConnectionAvailable = sift({
+      $and: [{
+        _id: {
+          $nin: this.itemCurrent.connectionsAfter.map(c => c._id)
+        }
+      }, {
+        _id: {
+          $ne: this.itemCurrent._id
+        }
+      }]
+      //workspace of component should filled but is'nt (should be filled in workspace load/deserialized)
+    }, this.workspaceCurrent.components);
+    let out = {
+      before: beforeConnectionAvailable,
+      after: afterConnectionAvailable
+    };
+
+    return out;
+  }
+  this.on('component_current_set', function(data) {
+    //console.log('component_current_set 1');
+    this.itemCurrent = data;
+  });
+
+  this.on('component_current_select', function(data) {
+    //console.log('WARNING');
+    this.itemCurrent = data;
+    //this.trigger('item_current_edit_mode','generic', this.itemCurrent);
+    this.trigger('component_current_select_done');
+  }); //<= item_current_select
+
+  this.on('navigation', function(entity, id, action) {
+    //console.log('WARNING');
+    if (entity == 'component') {
+      this.action = action
+      if (this.workspaceCurrent != undefined) {
+        this.itemCurrent = sift({
+          _id: id
+        }, this.workspaceCurrent.components)[0];
+        if (this.itemCurrent != undefined) {
+          this.trigger('navigation_control_done', entity);
+
+        } else {
+          this.trigger('ajax_fail', 'no component existing whith this id un current workspace');
+        }
+      } else {
+        this.trigger('ajax_fail', 'the component can not be loaded without first loading its workspace');
+      }
+    }
+  });
+
+  this.refreshComponent = function() {
+    this.trigger('item_current_editor_changed', this.itemCurrent.editor);
+    this.modeConnectBefore = false;
+    this.modeConnectAfter = false;
+    this.trigger('item_curent_connect_show_changed', {
+      before: this.modeConnectBefore,
+      after: this.modeConnectAfter
+    });
+    this.trigger('item_curent_available_connections', this.computeAvailableConnetions());
+    console.log('genericStore | component_current_select |', this.itemCurrent);
+    this.trigger('item_current_changed', this.itemCurrent);
+  }
+
+  this.on('component_current_refresh', function() {
+    //console.log('WARNING');
+    //this.trigger('item_current_edit_mode','generic', this.itemCurrent);
+    this.refreshComponent();
+  }); //<= item_current_select
+
+
+
 
 
 }

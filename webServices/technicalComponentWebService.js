@@ -7,13 +7,13 @@ var componentsCategoriesTree = require('./componentsCategoriesTree')
 // --------------------------------------------------------------------------------
 
 
-module.exports = function(router, unSafeRouteur) {
+module.exports = function(router,unsafeRouter, app,stompClient) {
 
   // --------------------------------------------------------------------------------
 
   var technicalComponentDirectory = require('./technicalComponentDirectory.js');
-  var recursivPullResolvePromise = require('./recursivPullResolvePromise');
-  technicalComponentDirectory.initialise(router, unSafeRouteur, recursivPullResolvePromise);
+  var recursivPullResolvePromise = require('./engine');
+  technicalComponentDirectory.initialise(unsafeRouter,app, stompClient);
 
 
   router.get('/technicalComponent/', function(req, res) {

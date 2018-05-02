@@ -12,7 +12,8 @@ var sift = require('sift');
 
 
 module.exports = function(router,stompClient) {
-
+  //TODO Ugly
+  this.stompClient=stompClient;
   // ---------------------------------------  ALL USERS  -----------------------------------------
 
   router.get('/workspaceByUser/:userId', function(req, res, next) {
@@ -40,13 +41,22 @@ module.exports = function(router,stompClient) {
   // ---------------------------------------------------------------------------------
 
   router.get('/workspace/:id/graph', function(req, res, next) {
+    //console.log(" WEB SERVICE GRAPH", req.params.id);
+    //console.log(" WEB SERVICE GRAPH");
     workspace_lib.get_workspace_graph_data(req.params.id).then((workspaceGraph)=>{
-      res.json(workspaceGraph)
+      res.json({workspaceGraph})
     }).catch(e => {
       next(e);
     });
   }); //<= graph workspace
 
+
+  router.post('/workspace/:id/addHistorique', function(req, res, next) {
+    // if (req.body != null) {
+    //   console.log(req.params.id)
+    //   console.log(req.body)
+    // }
+  })
   // --------------------------------------------------------------------------------
 
   router.get('/workspace/:id', function(req, res, next) {
@@ -77,6 +87,17 @@ module.exports = function(router,stompClient) {
       next(e);
     });
   }); // <= get one workspace
+
+  router.get('/processByWorkflow/:id', function(req, res, next) {
+    //console.log('Get On Workspace 1');
+    workspace_lib.get_process_byWorkflow(req.params.id).then((workspaceProcess)=>{
+      res.json(workspaceProcess);
+    }).catch(e => {
+      next(e);
+    });
+  }); // <= get one workspace
+
+
 
   // --------------------------------------------------------------------------------
   router.put('/workspacerowId/', function(req, res, next) {
@@ -207,7 +228,6 @@ module.exports = function(router,stompClient) {
   }) //<= delete workspace
 
 
-
   router.get('/workspaceComponent/load_all_component/:id', function(req, res, next) {
     var id = req.params.id;
     //console.log(id)
@@ -219,10 +239,55 @@ module.exports = function(router,stompClient) {
   }) //<= get_ConnectBeforeConnectAfter
 
   // --------------------------------------------------------------------------------
+  router.get('/processState/:id', function(req, res, next) {
+    //console.log('WORK');
+    var id = req.params.id;
+    res.send({state:'inprogress'});
+    // console.log(id);
+    // workspace_lib.get_process_result(id).then((historiqueEnd)=>{
+    //   if(historiqueEnd!=null){
+    //     res.send(historiqueEnd)
+    //   }else {
+    //     next(new Error("no process "+id))
+    //   }
+    //   //this.stompClient.send('/topic/work-response.'+data.callerId, JSON.stringify({processId:0}));
+    // }).catch(e => {
+    //   console.log(e);
+    //   next(e);
+    //   // console.log("IN ERROR WEB SERVICE",e.message);
+    //   // this.stompClient.send('/topic/work-response.'+data.callerId, JSON.stringify({error:e.message}));
+    // });
+  }.bind(this)); //<= process
 
 
+  //return updated Links
+  router.post('/workspaceComponent/connection', function(req, res, next) {
+    configuration = require('../configuration');
+    let body = req.body;
+    if (configuration.saveLock == false) {
+      workspace_lib.addConnection(req.body.workspaceId,req.body.source,req.body.target).then(links=>{
+        res.json(links)
+      }).catch(e => {
+        next(e);
+      });
+    } else {
+      next(new Error('save forbiden'));
+    }
+  });
 
-  // ---------------------------------------  ADMIN  -----------------------------------------
-
+  //return updated Links
+  router.delete('/workspaceComponent/connection', function(req, res, next) {
+    configuration = require('../configuration');
+    let body = req.body;
+    if (configuration.saveLock == false) {
+      workspace_lib.removeConnection(req.body.workspaceId,req.body.linkId).then(links=>{
+        res.json(links)
+      }).catch(e => {
+        next(e);
+      });
+    } else {
+      next(new Error('save forbiden'));
+    }
+  });
 
 }

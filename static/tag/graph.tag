@@ -52,6 +52,7 @@
       </g>
       <g id="lineSelector"></g>
       <g id="lineLayer"></g>
+      <g id="stateLayer"></g>
       <g id="shapeSelector"></g>
       <g id="shapeLayer"></g>
       <g id="textLayer"></g>
@@ -61,7 +62,6 @@
       <image  x="1290" y="20" id="addComponentGraph" xlink:href="./image/fullscreen-button.svg" class="commandButtonImage" if={fullscreen == true} x="1400" y="20" width="60" height="60" onclick={graphClick}></image>
       <image  x="50" y="20" id="addComponentGraph" xlink:href="./image/fleche.svg" class="commandButtonImage" if={fullscreen == false} x="1400" y="20" width="40" height="40" onclick={back}></image>-->
     </svg>
-
 
   </div>
   <!--graphContainer-->
@@ -74,32 +74,17 @@
     this.modeConnectBefore = false;
     this.fullscreen = true
 
-    // addComponentClick(e) {
-    //   //RiotControl.trigger('workspace_current_add_component_show', e);
-    //   route('workspace/'+this.graph.workspace._id+'/addComponent');
-    // }
-
-    // back(e) {
-    //   RiotControl.trigger('back');
-    // }
-
-    // graphClick(e) {
-    //   //console.log('EDIT');
-    //   RiotControl.trigger('workspace_current_graph');
-    //   this.update()
-    // }
-
+    // addComponentClick(e) {   //RiotControl.trigger('workspace_current_add_component_show', e);   route('workspace/'+this.graph.workspace._id+'/addComponent'); } back(e) {   RiotControl.trigger('back'); } graphClick(e) {   //console.log('EDIT');
+    // RiotControl.trigger('workspace_current_graph');   this.update() }
 
     editClick(e) {
       //console.log('graph edit Component | ', this.selectedNodes[0].component);
-      route('component/'+this.selectedNodes[0].component._id);
-      //RiotControl.trigger('component_current_show');
-      //RiotControl.trigger('component_current_select', this.selectedNodes[0].component);
+      route('component/' + this.selectedNodes[0].component._id);
+      //RiotControl.trigger('component_current_show'); RiotControl.trigger('component_current_select', this.selectedNodes[0].component);
     }
 
     removeClick(e) {
-      RiotControl.
-      trigger('workspace_current_delete_component', this.selectedNodes[0].component);
+      RiotControl.trigger('workspace_current_delete_component', this.selectedNodes[0].component);
       //   RiotControl.trigger('workspace_current_persist'); RiotControl.trigger('component_current_select', this.selectedNodes);
     }
 
@@ -115,15 +100,12 @@
       RiotControl.trigger('item_current_work');
     }
 
-
     removeLinkClick(e) {
       //console.log('removeLink |', this.selectedLines[0].source.component, this.selectedLines[0].target.component);
       RiotControl.trigger('disconnect_components', this.selectedLines[0].source.component, this.selectedLines[0].target.component);
     }
 
-    //this.selectedNodes={}; source urile : https://bl.ocks.org/mbostock/1095795 Constants for the SVG
-    // var width = 1500,
-    //   height = 900; // utilisé dans le script en bas
+    //this.selectedNodes={}; source urile : https://bl.ocks.org/mbostock/1095795 Constants for the SVG var width = 1500,   height = 900; // utilisé dans le script en bas
 
     /*
     Fonctions
@@ -135,10 +117,10 @@
 
       this.modeConnectAfter = sift({
         'connectAfterMode': true
-      }, this.graph.nodes).length>0;
+      }, this.graph.nodes).length > 0;
       this.modeConnectBefore = sift({
         'connectBeforeMode': true
-      }, this.graph.nodes).length>0;
+      }, this.graph.nodes).length > 0;
 
       //console.log(this.selectedNodes);
       this.selectorsNodes = this.svg.select("#shapeSelector").selectAll("rect").data(this.selectedNodes, function (d) {
@@ -168,14 +150,13 @@
       this.selectorsShapeCommandeBar = this.svg.select("#shapeCommandLayer").selectAll("svg").data(this.selectedNodes, function (d) {
         return d.id + '-shapeCommandBarComponent';
       });
-
       this.selectorsShapeCommandeBar.exit().remove();
       this.selectorsShapeCommandeBar = this.selectorsShapeCommandeBar.enter().append("svg").merge(this.selectorsShapeCommandeBar).attr('x', function (d) {
-
         return d.x - 30;
       }).attr('y', function (d) {
         return d.y - 30;
       }).each(function (d) {
+        d3.select(this).selectAll("image").remove();
         d3.select(this).append("image").attr("xlink:href", function (d) {
           let image = "";
           if (d.connectBeforeMode == true) {
@@ -211,7 +192,7 @@
         }).attr("data-id", function (d) {
           return d.id;
         }).on("click", function (d) {
-          route('component/'+d.component._id);
+          route('component/' + d.component._id);
           //RiotControl.trigger('component_current_select', d.component);
         });
 
@@ -232,6 +213,26 @@
         }).on("click", function (d) {
           RiotControl.trigger('item_current_work');
         });
+
+        if (d.status && d.status != 'waiting') {
+          d3.select(this).append("image").attr("xlink:href", function (d) {
+            return "./image/Super-Mono-png/PNG/sticker/icons/outbox.png";
+          }).attr("width", function (d) {
+            return 30;
+          }).attr("height", function (d) {
+            return 30;
+          }).attr("x", function (d) {
+            return 120;
+          }).attr("y", function (d) {
+            return 0;
+          }).attr("class", function (d) {
+            return 'workButtonGraph';
+          }).attr("data-id", function (d) {
+            return d.id;
+          }).on("click", function (d) {
+            RiotControl.trigger('component_preview');
+          });
+        }
 
         d3.select(this).append("image").attr("xlink:href", function (d) {
           return "./image/Super-Mono-png/PNG/basic/red/bin.png";
@@ -321,7 +322,8 @@
         }).attr("y", function (d) {
           return 0;
         }).on("click", function (d) {
-          RiotControl.trigger('disconnect_components', d.source.component, d.target.component);
+          console.log(d);
+          RiotControl.trigger('disconnect_components', d);
 
         });
       });
@@ -338,6 +340,7 @@
     this.dragged = function (dragged) {
       dragged.x = d3.event.x;
       dragged.y = d3.event.y;
+      RiotControl.trigger('workspace_current_move_component', dragged);
       //d3.select(this).attr("x", dragged.x).attr("y", dragged.y); //this représente le DOM
       this.nodes = this.svg.select("#shapeLayer").selectAll("image").data([dragged], function (d) {
         return d.id;
@@ -353,6 +356,7 @@
       let beforeLinks = sift({
         "target.id": dragged.id
       }, this.graph.links);
+      //console.log('beforeLinks', beforeLinks);
       this.links = this.svg.select("#lineLayer").selectAll("line").data(beforeLinks, function (d) {
         return d.id;
       }).attr("x2", dragged.x + 110).attr("y2", dragged.y + 35);
@@ -373,6 +377,7 @@
       let afterLinks = sift({
         "source.id": dragged.id
       }, this.graph.links);
+      //console.log('afterLinks', afterLinks);
       this.links = this.svg.select("#lineLayer").selectAll("line").data(afterLinks, function (d) {
         return d.id;
       }).attr("x1", dragged.x + 110).attr("y1", dragged.y + 35);
@@ -390,6 +395,26 @@
         return ((dragged.y + d.target.y) / 2) + 10;
       });
 
+      let nodesWithStatus = sift({
+        $and: [
+          {
+            status: {
+              $exists: true
+            }
+          }, {
+            id: dragged.id
+          }
+        ]
+      }, this.graph.nodes);
+      console.log('status',nodesWithStatus);
+      this.status = this.svg.select("#stateLayer").selectAll("circle").data(nodesWithStatus, function (d) {
+        return d.id;
+      }).attr('cx', function (d) {
+        return dragged.x + 105;
+      }).attr('cy', function (d) {
+        return dragged.y + 5;
+      });
+
     }.bind(this);
 
     this.dragended = function (d) {
@@ -402,7 +427,7 @@
             RiotControl.trigger('connect_components', d.component, this.selectedNodes[0].component);
           }
           if (this.modeConnectAfter) {
-            console.log(d.component, this.selectedNodes[0].component);
+            //console.log(d.component, this.selectedNodes[0].component);
             RiotControl.trigger('connect_components', this.selectedNodes[0].component, d.component);
           }
         } else {
@@ -413,19 +438,10 @@
         //RiotControl.trigger('component_current_show'); RiotControl.trigger('component_current_select', d.component);
       } else {
         console.log('dragended');
-        // RiotControl.trigger('item_updateField', {
-        //   id: d.id,
-        //   field: "graphPositionX",
-        //   data: d.x
-        // });
-        // RiotControl.trigger('item_updateField', {
-        //   id: d.id,
-        //   field: "graphPositionY",
-        //   data: d.y
-        // });
-        d.component.graphPositionX=d.x;
-        d.component.graphPositionY=d.y;
-        RiotControl.trigger('item_persist',d.component);
+        // RiotControl.trigger('item_updateField', {   id: d.id,   field: "graphPositionX",   data: d.x }); RiotControl.trigger('item_updateField', {   id: d.id,   field: "graphPositionY",   data: d.y });
+        d.component.graphPositionX = d.x;
+        d.component.graphPositionY = d.y;
+        RiotControl.trigger('item_persist', d.component);
         // this.updateBoundObject(d); this.drawSelected(); if (!d3.event.active) {   this.simulation.alphaTarget(0.1); }
       }
     }.bind(this);
@@ -491,6 +507,27 @@
         return d.id;
       }).call(d3.drag().on("start", this.dragstarted).on("drag", this.dragged).on("end", this.dragended));
 
+      let nodesWithStatus = sift({
+        status: {
+          $exists: true
+        }
+      }, graph.nodes);
+      this.status = this.svg.select("#stateLayer").selectAll("circle").data(nodesWithStatus, function (d) {
+        return d.id;
+      });
+      this.status.exit().remove();
+      this.status = this.status.enter().append("circle").merge(this.status).attr("r", function (d) {
+        return 40;
+      }).attr('cx', function (d) {
+        return d.x + 105;
+      }).attr('class', function (d) {
+        return d.status;
+      }).attr('cy', function (d) {
+        return d.y + 5;
+      }).attr('data-id', function (d) {
+        return d.id;
+      }).call(d3.drag().on("start", this.dragstarted).on("drag", this.dragged).on("end", this.dragended));
+
       this.drawSelected();
 
     }.bind(this)
@@ -518,7 +555,7 @@
     // l'élémént sur le bord gauche         y: inputCurrentOffset,         component: record       }       inputCurrentOffset += inputsOffset;     } else if (record.connectionsAfter.length == 0 && record.graphPositionX == undefined &&
     // record.graphPositionY == undefined) {       node = {         text: record.type,         id: record._id,         graphIcon: record.graphIcon,         // fx: record.graphPositionX || width - 10 - record.type.length * 10, // positionne l'element en
     // largeur par rapport au bord droit du graphe fy: record.graphPositionY || outputCurrentOffset,         x: width - 230, // positionne l'element en largeur par rapport au bord droit du graphe         y: outputCurrentOffset,         component: record
-    //  }       outputCurrentOffset += outputsOffset;     } else { // tous ceux du milieu       node = {         text: record.type,         id: record._id,         graphIcon: record.graphIcon,         x: record.graphPositionX || width / 2,         y:
+    // }       outputCurrentOffset += outputsOffset;     } else { // tous ceux du milieu       node = {         text: record.type,         id: record._id,         graphIcon: record.graphIcon,         x: record.graphPositionX || width / 2,         y:
     // record.graphPositionY || middleCurrentOffset,         component: record       }       if (record.graphPositionY == undefined) {         middleCurrentOffset += middlesOffset;       }
     //
     //     }     graph.nodes.push(node);   }
@@ -548,9 +585,9 @@
     // this.modeConnectBefore = modes.before;   this.update(); }.bind(this)); evenement appele par riot
     this.on('mount', function () { // mount du composant riot
       //RiotControl.on('workspace_current_changed', this.refreshGraph);
-      if(this.parent != undefined  && this.parent.title == "Workspace"){
+      if (this.parent != undefined && this.parent.title == "Workspace") {
         this.fullscreen = true
-      }else{
+      } else {
         this.fullscreen = false
       }
       RiotControl.on('workspace_graph_selection_changed', this.drawSelected);
@@ -574,6 +611,18 @@
 
     #shapeLayer image {
       cursor: pointer;
+    }
+
+    #stateLayer circle.resolved {
+      fill: green;
+    }
+
+    #stateLayer circle.waiting {
+      fill: orange;
+    }
+
+    #stateLayer circle.error {
+      fill: red;
     }
 
     #lineLayer line {

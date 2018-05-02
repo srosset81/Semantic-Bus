@@ -1,3 +1,4 @@
+"use strict";
 module.exports = new function() {
     this.type = 'REST API POST';
     this.description = 'exposition du flux de donnée sur une API http uniquement en POST';
@@ -15,13 +16,13 @@ module.exports = new function() {
 
 
 
-    this.initialise = function(router) {
+    this.initialise = function(router,stompClient) {
       router.post('/:urlRequiered', function(req, res, next) {
         //console.log("IN POST", req.body);
         var urlRequiered = req.params.urlRequiered;
         //this require is live because constructor require cause cyclic dependencies (recursivPullResolvePromise->restApiGet)
         //TODO require use cache object  : need to build one engine per request
-        this.recursivPullResolvePromiseDynamic = require('../recursivPullResolvePromise')
+        this.recursivPullResolvePromiseDynamic = require('../engine')
         var specificData;
 
         //console.log('urlRequiered', urlRequiered)
@@ -40,7 +41,7 @@ module.exports = new function() {
             // } else {
             //console.log("in component", component)
             specificData = component.specificData;
-            return this.recursivPullResolvePromiseDynamic.getNewInstance().resolveComponent(component, 'push', {data:req.body})
+            return this.recursivPullResolvePromiseDynamic.execute(component, 'push',stompClient,undefined,{data:req.body})
               //return this.recursivPullResolvePromise.resolveComponentPull(data[0], false,req.query);
             // }
 

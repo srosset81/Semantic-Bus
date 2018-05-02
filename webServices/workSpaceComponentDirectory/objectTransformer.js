@@ -1,3 +1,4 @@
+"use strict";
 module.exports = {
   type: 'Object Transformer',
   description: 'transformer un objet par mapping grâce à un objet transformation',
@@ -75,15 +76,16 @@ module.exports = {
       }
       //console.log('jsonTransform | resultBeforUnresolved |', transformResult);
       var destResult = this.unresolveProcess(transformResult, dissociatePatternResolvable)
-      //console.log('jsonTransform | afterUnresolved |', destResult);
+      // console.log('jsonTransform | afterUnresolved |', destResult);
 
       if (dissociatePatternPostProcess == undefined) {
         //console.log('ALLO');
         postProcessResult = destResult;
       } else {
+        // console.log('jsonTransform | dissociatePatternPostProcess |', dissociatePatternPostProcess);
         postProcessResult = this.postProcess(destResult, dissociatePatternPostProcess)
       }
-      //console.log('jsonTransform | postProcessResult |', postProcessResult);
+      // console.log('jsonTransform | postProcessResult |', postProcessResult);
     } catch (e) {
       console.log(e);
       postProcessResult = source;
@@ -140,7 +142,7 @@ module.exports = {
                 return match.slice(1, -1);
               })
               let dispatchParameter = {}
-              for (elementKey in elements) {
+              for (let elementKey in elements) {
                 dispatchParameter[elements[elementKey]] = elements[elementKey];
               }
               //console.log(dispatchParameter);
@@ -247,7 +249,7 @@ module.exports = {
     if (Array.isArray(nodeInData)) {
       nodeOut = [];
       if (nodeInPostProcess != undefined && nodeInPostProcess[0] != undefined) {
-        for (recordData of nodeInData) {
+        for (let recordData of nodeInData) {
           nodeOut.push(this.postProcess(recordData, nodeInPostProcess[0]));
         }
       } else {
@@ -263,7 +265,7 @@ module.exports = {
             var javascriptEvalString = nodeInPostProcess[nodeInDataProperty].processData;
             //console.log('javascriptEvalString |',javascriptEvalString)
             //console.log('nodeInData[nodeInDataProperty] |', nodeInData[nodeInDataProperty]);
-            for (evalParam in nodeInData[nodeInDataProperty]) {
+            for (let evalParam in nodeInData[nodeInDataProperty]) {
               //console.log(evalParam);
               var evalParamValue = nodeInData[nodeInDataProperty][evalParam];
               //console.log('evalParam |',evalParam,' | evalParamValue | ',evalParamValue);
@@ -293,13 +295,14 @@ module.exports = {
               nodeOut[nodeInDataProperty] = eval(javascriptEvalString);
               //console.log('eval done');
             } catch (e) {
-              console.log('Javascript Eval failed ', javascriptEvalString, e);
+              nodeOut[nodeInDataProperty]={error:'Javascript Eval failed ',evalString:javascriptEvalString,cause:e.message};
+              //console.log('Javascript Eval failed ', javascriptEvalString, e.message);
             }
           } else if (nodeInPostProcess[nodeInDataProperty].process == 'arrayHack') {
             //console.log('arrayHack',nodeInDataProperty);
             var objectToTransform = this.postProcess(nodeInData[nodeInDataProperty], nodeInPostProcess[nodeInDataProperty]);
             var arrayTransform = [];
-            for (key in objectToTransform) {
+            for (let key in objectToTransform) {
               arrayTransform.push(objectToTransform[key])
             }
             nodeOut[nodeInDataProperty] = arrayTransform;
@@ -327,6 +330,10 @@ module.exports = {
     var nodeOut;
     if (Array.isArray(nodeIn)) {
       nodeOut = [];
+      //console.log(nodeIn,jsonTransformPattern);
+      if(nodeIn.length==0&&jsonTransformPattern.length>0){
+        nodeOut=jsonTransformPattern;
+      }
     } else {
       nodeOut = {};
     }
@@ -369,7 +376,7 @@ module.exports = {
         });
       } else {
         resolve({
-          data: data.specificData.transformObject
+          data: this.jsonTransform({}, data.specificData.transformObject)
         });
       }
     })

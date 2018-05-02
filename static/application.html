@@ -13,6 +13,7 @@
   <link href='./js/jsonEditor/dist/jsoneditor.min.css' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="./js/awesomplete-gh-pages/awesomplete.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.5/themes/default/style.min.css" />
 </head>
 
 <body>
@@ -22,6 +23,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/webstomp-client@1.2.0/dist/webstomp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.5/jstree.min.js"></script>
+
   <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>-->
   <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/javascript-detect-element-resize/0.5.3/detect-element-resize.js"></script>-->
 
@@ -37,6 +41,7 @@
   <script src="./js/spin.min.js"></script>
   <script src="./js/RiotControl/riotcontrol.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
 
   <script src="./store/workspaceBusiness.js"></script>
   <script src="./store/workspaceStore.js"></script>
@@ -63,6 +68,7 @@
   <script type="riot/tag" src="tag/technicalComponentTable.tag"></script>
   <script type="riot/tag" src="tag/admin.tag"></script>
   <script type="riot/tag" src="tag/jsonEditor.tag"></script>
+  <script type="riot/tag" src="tag/jsonFragViewer.tag"></script>
   <script type="riot/tag" src="tag/user-list.tag"></script>
   <script type="riot/tag" src="tag/login.tag"></script>
   <script type="riot/tag" src="tag/profil.tag"></script>
@@ -74,6 +80,11 @@
   <script type="riot/tag" src="tag/graph_of_use_workspace.tag"></script>
   <script type="riot/tag" src="tag/jsonPreviewer.tag"></script>
   <script type="riot/tag" src="tag/jsonPreviewer-header.tag"></script>
+  <script type="riot/tag" src="tag/stripe.tag"></script>
+  <script type="riot/tag" src="tag/stripe2.tag"></script>
+  <script type="riot/tag" src="tag/transactions-list.tag"></script>
+  <script type="riot/tag" src="tag/process-list.tag"></script>
+
 
   <script type="riot/tag" src="tag/no-editor.tag"></script>
   <script type="riot/tag" src="tag/scrapper-editor.tag"></script>
@@ -100,18 +111,17 @@
   <script type="riot/tag" src="tag/value-mapping-editor.tag"></script>
   <script type="riot/tag" src="tag/timer-editor.tag"></script>
   <script type="riot/tag" src="tag/rest-api-post-editor.tag"></script>
-  <script type="riot/tag" src="tag/stripe.tag"></script>
-  <script type="riot/tag" src="tag/transactions-list.tag"></script>
+
+  <script type="riot/tag" src="tag/query-params-creation-editor.tag"></script>
 
 
 
 
   <script>
-
     $.ajax({
       method: 'get',
-      url: '/configuration/configurationAmqpHost',
-    }).done(amqpHost => {
+      url: '/configuration/configurationMessageQueue',
+    }).done(configurationMessageQueue => {
       //console.log("configurationAmqpHost", amqpHost)
       // var onMessage = function(message) {
       //   console.log('message', JSON.parse(message.body));
@@ -121,49 +131,49 @@
       var onConnect = function(client) {
         //console.log('connected',stompClient,client);
 
-        let allStore={};
+        let allStore = {};
         let utilStore = new UtilStore();
         RiotControl.addStore(utilStore);
-        allStore['utilStore']=utilStore;
-
-        var workspaceStore = new WorkspaceStore(utilStore); // Create a store instance.
-        RiotControl.addStore(workspaceStore); // Register the store in central dispatch.
-        allStore['workspaceStore']=workspaceStore;
+        allStore['utilStore'] = utilStore;
 
         var profilStore = new ProfilStore();
         RiotControl.addStore(profilStore);
-        allStore['profilStore']=profilStore;
+        allStore['profilStore'] = profilStore;
 
         var technicalComponentStore = new TechnicalComponentStore(utilStore);
         RiotControl.addStore(technicalComponentStore);
-        allStore['technicalComponentStore']=technicalComponentStore;
+        allStore['technicalComponentStore'] = technicalComponentStore;
 
         var specificStoreList = [];
 
-        let cacheNosqlStore = new CacheNosqlStore()
+        let cacheNosqlStore = new CacheNosqlStore(utilStore)
         RiotControl.addStore(cacheNosqlStore);
         specificStoreList.push(cacheNosqlStore)
-        allStore['cacheNosqlStore']=cacheNosqlStore;
+        allStore['cacheNosqlStore'] = cacheNosqlStore;
 
         let uploadStore = new UploadStore(utilStore);
         RiotControl.addStore(uploadStore);
         specificStoreList.push(uploadStore)
-        allStore['uploadStore']=uploadStore;
+        allStore['uploadStore'] = uploadStore;
 
         let sqlStore = new SqlStore();
         RiotControl.addStore(sqlStore);
         specificStoreList.push(sqlStore)
-        allStore['sqlStore']=sqlStore;
+        allStore['sqlStore'] = sqlStore;
 
-        var genericStore = new GenericStore(utilStore, specificStoreList,stompClient);
-        RiotControl.addStore(genericStore);
-        allStore['genericStore']=genericStore;
+        // var genericStore = new GenericStore(utilStore, specificStoreList, stompClient);
+        // RiotControl.addStore(genericStore);
+        // allStore['genericStore'] = genericStore;
+
+        var workspaceStore = new WorkspaceStore(utilStore, stompClient,specificStoreList); // Create a store instance.
+        RiotControl.addStore(workspaceStore); // Register the store in central dispatch.
+        allStore['workspaceStore'] = workspaceStore;
 
         var adminStore = new AdminStore(utilStore);
         RiotControl.addStore(adminStore);
-        allStore['adminStore']=adminStore;
+        allStore['adminStore'] = adminStore;
 
-        var mainController = new MainController(allStore,stompClient);
+        var mainController = new MainController(allStore, stompClient);
         RiotControl.addStore(mainController);
 
         RiotControl.on('login_redirect', function() {
@@ -193,26 +203,38 @@
         // stompClient.send('/queue/work-ask',JSON.stringify({message:'c est le navigateur qui te parle!!!'}));
       }.bind(this);
 
-      var onError=function(err) {
+      var onError = function(err) {
         console.log('disconnected ', err);
       };
 
-      var url = 'wss://stomp-rabitmq-stomp.b9ad.pro-us-east-1.openshiftapps.com:443/ws';
+      //var url = 'wss://stomp-rabitmq-stomp.b9ad.pro-us-east-1.openshiftapps.com:443/ws';
+      //var url = 'wss://semantic-bus.org:443/stomp/ws/';
+      var url = configurationMessageQueue.socketClient;
+      //var url = 'ws://35.187.66.2:15674/ws/';
       var login = 'guest';
       var password = 'guest';
-      var stompClient = webstomp.client(url,{heartbeat: {incoming: 10000, outgoing: 10000},debug:true})
-      if(amqpHost!=undefined && amqpHost.length>0){
-        stompClient.connect(login, password, onConnect, onError,amqpHost);
-      }else{
+      var stompClient = webstomp.client(configurationMessageQueue.url, {
+        heartbeat: {
+          incoming: 10000,
+          outgoing: 10000
+        },
+        debug: true
+      })
+      if (configurationMessageQueue.host != undefined && configurationMessageQueue.host.length > 0) {
+        stompClient.connect(login, password, onConnect, onError, configurationMessageQueue.host);
+        //stompClient.connect(login, password, onConnect, onError);
+
+      } else {
         stompClient.connect(login, password, onConnect, onError);
       }
 
     })
-
-
-
-
   </script>
+  <style>
+    body {
+      font-family: 'Open Sans'
+    }
+  </style>
 </body>
 
 </html>

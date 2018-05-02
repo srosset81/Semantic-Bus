@@ -1,4 +1,4 @@
-const https = require('https');
+"use strict";
 module.exports = {
   type: 'REST Get JSON',
   description: 'intéroger une API REST avec une requete Get qui fourni un flux JSON, XML',
@@ -9,9 +9,11 @@ module.exports = {
     'http://semantic-bus.org/data/tags/APIComponents'
   ],
   url: require('url'),
-  http: require('http'),
+  //http: require('http'),
+  http: require('follow-redirects').http,
   //https: require('https'),
   https: require('follow-redirects').https,
+
   xml2js: require('xml2js'),
   //waterfall: require('promise-waterfall'),
 
@@ -22,20 +24,20 @@ module.exports = {
       //console.log(pullParams,urlString);
       let urlString = specificData.url;
       //console.log(urlString);
-      for (param in pullParams) {
+      for (let param in pullParams) {
         //console.log(param);
         urlString = urlString.replace('<%' + param + '%>', pullParams[param]);
       }
       let headers = {}
       if (specificData.headers != undefined) {
-        for (header of specificData.headers) {
+        for (let header of specificData.headers) {
           headers[header.key] = header.value;
         }
       }
       //let headers=specificData.headers.map(record=>{return({record.key:record.value})});
       //console.log(headers);
       //console.log(urlString);
-      const parsedUrl = this.url.parse(urlString);
+      let parsedUrl = this.url.parse(urlString);
       // console.log('REST Get JSON | makerequest | port', parsedUrl.port);
       // console.log('REST Get JSON | makerequest | host', parsedUrl.hostname);
       var requestOptions = {};
@@ -61,19 +63,20 @@ module.exports = {
       //console.log(urlString.indexOf('https') != -1);
 
       var lib = urlString.indexOf('https') != -1 ? this.https : this.http;
-
-      const request = lib.request(requestOptions, response => {
-        const hasResponseFailed = response.statusCode >= 400;
+      //console.log('before',requestOptions.path);
+      let request = this.http.request(requestOptions, response => {
+        let hasResponseFailed = response.statusCode >= 400;
         //console.log('REST Get JSON | header |',response.headers);
         //console.log('REST Get JSON | statusCode: |',response.statusCode);
         var responseBody = '';
-
+        response.resume();
         if (hasResponseFailed) {
-          reject(new Error('Requestfailed with status ' + response.statusCode));
+          reject(new Error('Request failed for url '+urlString+' with status ' + response.statusCode));
         } else {
           /* the response stream's (an instance of Stream) current data. See:
            * https://nodejs.org/api/stream.html#stream_event_data */
           //var i = 0;
+
           response.on('data', chunk => {
             //console.log(chunk.toString());
             //console.log('chunk ',i);
@@ -105,6 +108,7 @@ module.exports = {
                 });
               } else if (contentType.search('json') != -1) {
                 let responseObject = JSON.parse(responseBody);
+                //console.log('response length',responseObject.length,parsedUrl.href);
                 resolve({
                   data: JSON.parse(responseBody)
                 });

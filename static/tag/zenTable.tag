@@ -19,7 +19,7 @@
       onclick={rowClic}
       style="justify-content: space-between;flex-shrink:0;">
 
-      <div class="containerH tableRowContent" style="flex-grow:1;" onkeyup={rowKeyUp}>
+      <div class="containerH tableRowContent" style="flex-grow:1;" onkeyup={rowKeyUp} onchange={onChange}>
         <yield from="row"/>
       </div>
       <div class="containerV" style="flex-basis:60px;justify-content:center">
@@ -62,9 +62,10 @@
     }
 
     rowClic(e) {
-      //console.log('CLIC');
-      //console.log("in row click", this.data)
+
+      console.log("in row click", this.opts)
       if (!(this.opts.disallowselect == true)) {
+        console.log('CLIC');
         //console.log(e.item);
         //var index = parseInt(e.item.rowId)
         if (this.data.length > 0) {
@@ -85,6 +86,7 @@
               e.item.mainSelected=false;
             }
           }
+          console.log('TRIGGER');
           this.trigger('rowsSelected',sift({selected:true},this.data));
           //var selected = this.data[index].selected || false;
           //this.data[index].selected = !selected;
@@ -152,11 +154,11 @@
     });
 
     navigationClick(e) {
-      console.log("test", e.item)
+      //console.log("test", e.item)
       var index = parseInt(e.item.rowId);
       let dataWithrowId = this.data[index];
       dataWithrowId.rowId = index;
-      console.log(dataWithrowId)
+      //console.log(dataWithrowId)
       this.trigger('rowNavigation', dataWithrowId)
     }
 
@@ -166,8 +168,14 @@
     }
 
     delRowClick(e) {
+      //console.log(e);
+        if (confirm("Êtes vous sur de vouloir supprimer l'élément ?")) {
+            this.trigger('delRow', e.item)
+        } else {
+            return
+        }
       //let dataWithrowId = e.item;
-      this.trigger('delRow', e.item)
+
       //dataWithrowId.rowId = i;
       //this.trigger('delRow', e.item)
       // console.log('ALLO');
@@ -214,26 +222,34 @@
       //console.log(this.indexedData);
     }
 
-    recalculateHeader() {
-      //console.log(this.refs.tableHeader)
-      var headers = this.refs.tableHeader.children;
-      for (var row of this.root.querySelectorAll('.tableRow')) {
-        for (var headerkey in headers) {
-          var numkey = parseInt(headerkey);
-          if (!isNaN(numkey)) {
-            //console.log(row.children[numkey].getBoundingClientRect().width);
-            var width = row.children[numkey].getBoundingClientRect().width;
-            var cssWidth = width + 'px';
-            headers[headerkey].style.width = cssWidth;
-            headers[headerkey].style.maxWidth = cssWidth;
-            headers[headerkey].style.minWidth = cssWidth;
-            headers[headerkey].style.flexBasis = cssWidth;
-            //console.log(headers[headerkey].style);
-          }
-        }
-        break;
+    onChange(e){
+      if (e.target.attributes['data-field'] != undefined) {
+        //console.log('ALLO');
+        e.item[e.target.attributes['data-field'].value] = e.target.value;
       }
+      this.trigger('dataChanged',this.data)
     }
+
+    // recalculateHeader() {
+    //   //console.log(this.refs.tableHeader)
+    //   var headers = this.refs.tableHeader.children;
+    //   for (var row of this.root.querySelectorAll('.tableRow')) {
+    //     for (var headerkey in headers) {
+    //       var numkey = parseInt(headerkey);
+    //       if (!isNaN(numkey)) {
+    //         //console.log(row.children[numkey].getBoundingClientRect().width);
+    //         var width = row.children[numkey].getBoundingClientRect().width;
+    //         var cssWidth = width + 'px';
+    //         headers[headerkey].style.width = cssWidth;
+    //         headers[headerkey].style.maxWidth = cssWidth;
+    //         headers[headerkey].style.minWidth = cssWidth;
+    //         headers[headerkey].style.flexBasis = cssWidth;
+    //         //console.log(headers[headerkey].style);
+    //       }
+    //     }
+    //     break;
+    //   }
+    // }
 
     this.on('mount', function () {
       this.placeholder = document.createElement("div");
@@ -294,6 +310,9 @@
       padding: 10px;
       border-width: 1px;
     }
+    .tableHeader{
+        padding: 8pt;
+      }
 
     .tableHeader > * {
       /*display: inline-block;*/

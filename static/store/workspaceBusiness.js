@@ -74,33 +74,17 @@ function WorkspaceBusiness() {
 
 
   this.serialiseWorkspaceComponent = function(workspaceComponentIn) {
-    if (!workspaceComponentIn.connectionsBefore) {
-      workspaceComponentIn.connectionsBefore = []
-    }
-    if (!workspaceComponentIn.connectionsAfter) {
-      workspaceComponentIn.connectionsAfter = []
-    }
+    console.log("SERIALISE",workspaceComponentIn);
     var out = {
       _id: workspaceComponentIn._id,
       specificData: workspaceComponentIn.specificData,
       name: workspaceComponentIn.name,
-      average_consumption: workspaceComponentIn.average_consumption,
-      flow_size: workspaceComponentIn.flow_size,
-      connectionsBefore: workspaceComponentIn.connectionsBefore.map(conn => {
-        return {
-          _id: conn._id
-        }
-      }),
-      connectionsAfter: workspaceComponentIn.connectionsAfter.map(conn => {
-        return {
-          _id: conn._id
-        }
-      }),
       module: workspaceComponentIn.module,
       type: workspaceComponentIn.type,
       description: workspaceComponentIn.description,
       editor: workspaceComponentIn.editor,
       workspaceId: workspaceComponentIn.workspaceId,
+      persistProcess: workspaceComponentIn.persistProcess,
       graphPositionX : workspaceComponentIn.graphPositionX,
       graphPositionY : workspaceComponentIn.graphPositionY
     }
@@ -119,8 +103,7 @@ function WorkspaceBusiness() {
       _id: workspaceIn._id,
       name: workspaceIn.name,
       description: workspaceIn.description,
-      average_consumption: workspaceIn.average_consumption,
-      flow_size: workspaceIn.flow_size,
+      limitHistoric : workspaceIn.limitHistoric,
       rowid: workspaceIn.rowid
     }
     for (component of workspaceIn.components) {

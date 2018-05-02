@@ -31,7 +31,7 @@ function _extension(filename, contentType) {
 function _type_file(filename, dataString, dataBuffer, out, contentType) {
   //console.log("in aggregate function")
   return _extension(filename, contentType).then(function (extension) {
-    console.log("extension |", extension)
+    //console.log("extension |", extension)
     return new Promise(function (resolve, reject) {
       if (out == true || out == 'true') {
         //console.log(out)
@@ -65,7 +65,7 @@ function _type_file(filename, dataString, dataBuffer, out, contentType) {
             // RDF XML DONE IF TEST PARSE
           case (".rdf"):
           case (".owl"):
-          console.log('allo');
+          //console.log('allo');
             rdf.rdf_traitmentXML(dataString).then(result=>{
               // console.log("RDF", reusltat)
               //console.log(JSON.stringify(reusltat))

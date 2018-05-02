@@ -1,6 +1,6 @@
 <navigation>
 
-  <div id="containerSecureDiv" if={userAuthentified!=true} class="containerV" style="justify-content:center">
+  <div id="containerLoaderDiv" if={userAuthentified!=true} class="containerV" style="justify-content:center">
     <div id="row">
       <div id="loaderDiv"></div>
       <h1 id="loaderText" class="containerV">
@@ -33,7 +33,7 @@
 
   <div class="containerV" style="bottom:0;top:0;right:0;left:0;position:absolute">
 
-    <div class="containerH header" style="background-color: rgb(33,150,243);flex-wrap:nowrap;flex-shrink : 0; flex-basis:100px;">
+    <div class="containerH header" style="background-color: rgb(33,150,243);flex-wrap:nowrap;flex-shrink : 0; flex-basis:140px;">
       <workspace-table-header if={isScrennToShow('myWorkspaces')}></workspace-table-header>
       <landing-header if={isScrennToShow('landing')}></landing-header>
       <workspace-share-table-header if={isScrennToShow('sharedWorkspaces')}></workspace-share-table-header>
@@ -41,6 +41,7 @@
       <workspace-editor-header if={isScrennToShow('workspace')}></workspace-editor-header>
       <workspace-component-editor-header if={isScrennToShow('component')}></workspace-component-editor-header>
       <json-previewer-header if={isScrennToShow('workPreview')}></json-previewer-header>
+
     </div>
 
     <div class="containerH" style="flex-grow:1;flex-shrink:1;">
@@ -72,16 +73,11 @@
             <p style="color:white;font-size:12px">Paramêtres</p>
           </a>
         </div>
-        <div class="containerV" style="flex-basis:40px;">
-          <div class="commandButtonImage" style="flex-basis:40px">
-            <img src="./image/working.gif" width="40px" if={workInProgress}>
-          </div>
-        </div>
       </div>
 
       <!--  CONTENT   -->
 
-      <div class="containerV" style="flex-grow:1">
+      <div class="containerV generalContainer" style="flex-grow:1">
         <landing if={isScrennToShow('landing')}></landing>
         <workspace-table if={isScrennToShow('myWorkspaces')></workspace-table>
         <workspace-share-table if={isScrennToShow('sharedWorkspaces')></workspace-share-table>
@@ -170,20 +166,25 @@
       this.update();
     }.bind(this));
 
-    RiotControl.on('item_current_work_start', function (data) {
-      this.workInProgress = true;
+    RiotControl.on('process-change', processCollection => {
+      this.processCollection = processCollection;
       this.update();
-    }.bind(this));
+    });
 
-    RiotControl.on('item_current_work_done', function (data) {
-      this.workInProgress = false;
-      this.update();
-    }.bind(this));
+    // RiotControl.on('item_current_work_start', function (data) {
+    //   this.workInProgress = true;
+    //   this.update();
+    // }.bind(this));
 
-    RiotControl.on('item_current_work_fail', function () {
-      this.workInProgress = false;
-      this.update();
-    }.bind(this));
+    // RiotControl.on('item_current_work_done', function (data) {
+    //   this.workInProgress = false;
+    //   this.update();
+    // }.bind(this));
+
+    // RiotControl.on('item_current_work_fail', function () {
+    //   this.workInProgress = false;
+    //   this.update();
+    // }.bind(this));
 
     RiotControl.on('ajax_fail', function (message) {
       console.log('navigation.tag | ajax_fail');
@@ -238,6 +239,10 @@
       text-align: center;
     }
 
+
+    .generalContainer{
+          background-color: rgb(238,242,249);
+    }
     /*LANDING CSS */
     /*
     #landingTitle {
@@ -369,6 +374,14 @@
     .selectedMenu {
       background-color: rgb(9,245,185);
     }
+
+    .progressContainer {
+      padding: 5px;
+      flex-basis: 20px;
+      flex-shrink: 0;
+    }
+
+
 
   </style>
 </navigation>

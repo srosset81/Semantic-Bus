@@ -1,3 +1,4 @@
+"use strict";
 module.exports = {
   type: 'Sparql request',
   description: 'Requeter en sparql sur un fichier json ld',
@@ -11,37 +12,44 @@ module.exports = {
 
   makeRequest: function(flowData, request) {
     return new Promise((resolve, reject) => {
+
       //var query = request;
       if (request == undefined) {
         reject(new Error("empty request"))
       } else {
-        new this.rdfstore.Store(function(err, store) {
-          //console.log('store', store);
-          try {
-            store.load("application/ld+json", flowData, function(err, results) {
+        try {
+
+          new this.rdfstore.Store({name:'test', overwrite:true},(err, store) => {
+          //this.rdfstore.create((err, store) => {
+            try {
+
+              store.load("application/ld+json", flowData, (err, results) => {
 
 
-              //console.log(JSON.stringify(results));
-              //console.log(query);
-              try {
-                store.execute(request, function(err, graph) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resolve({
-                      data: graph
-                    })
-                  }
-                })
-              } catch (e) {
-                reject(e);
-              }
-            })
-
-          } catch (e) {
-            reject(e);
-          }
-        });
+                //console.log(JSON.stringify(results));
+                //console.log(query);
+                try {
+                  store.execute(request, (err, graph) => {
+                    //console.log('err',err,'graph',graph);
+                    if (err != null && err != undefined) {
+                      reject(new Error(err));
+                    } else {
+                      resolve({
+                        data: graph
+                      })
+                    }
+                  })
+                } catch(e) {
+                  reject(e);
+                }
+              })
+            } catch(e) {
+              reject(e);
+            }
+          });
+        } catch(e) {
+          reject(e);
+        }
       }
 
     })

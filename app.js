@@ -37,7 +37,7 @@ var env = process.env;
 
 var httpGet = require('./webServices/workSpaceComponentDirectory/restGetJson.js');
 var fs = require('fs');
-const configUrl = env.CONFIG_URL || 'http://app-cee3fd62-a81e-48b2-a766-a8be305d5fa9.cleverapps.io/file/dev';
+const configUrl = env.CONFIG_URL || 'http://data-players.com/config/devOutOfDocker.json';
 //console.log("before http config",configUrl);
 httpGet.makeRequest('GET', {
   url: configUrl
@@ -73,7 +73,8 @@ httpGet.makeRequest('GET', {
 
       //var webstomp = require('webstomp-client');
 
-      var url=configJson.socketServer;
+      var url = configJson.socketServer;
+
       //var url = 'wss://semantic-bus.org:443/stomp/ws/';
       //var url = 'ws://35.187.66.2:15674/ws/';
 
@@ -97,7 +98,8 @@ httpGet.makeRequest('GET', {
       //   origin: 'https://semantic-bus.org'
       // });
 
-      var login = 'guest', password = 'guest';
+      var login = 'guest',
+        password = 'guest';
       //  var stompClient = webstomp.over(webSocket,{heartbeat: {incoming: 10000, outgoing: 10000},debug:true});
 
       //client: webstomp.over(new WebSocket(url), options)
@@ -106,34 +108,42 @@ httpGet.makeRequest('GET', {
       //   console.log('message', JSON.parse(message.body));
       //   stompClient.send('/topic/work-response', JSON.stringify({message:'AJAX va prendre cher'}));
       // }
-      console.log(amqp)
-      amqp.connect(url+'/'+ env.AMQPHOST, function(err, conn) {
-        console.log('AMQP connected',err, conn);
+      //console.log(env.AMQPHOST);
+      amqp.connect(url + '/' + configJson.amqpHost, function(err, conn) {
+        //if(err!=undefined){
+        console.log('AMQP Connection Error', err);
+        //}
+        console.log('AMQP connected', conn);
         conn.createChannel(function(err, ch) {
           console.log('AMQP connected 2',err);
           onConnect(ch);
           console.log('channel created');
-          ch.assertQueue('work-ask', {durable: true});
-          ch.assertExchange('amq-topic', 'topic', {durable: true});
+          ch.assertQueue('work-ask', {
+            durable: true
+          });
+          // ch.assertExchange('amq-topic', 'topic', {
+          //   durable: true
+          // });
         });
 
       });
-      var onConnect=function(amqpClient) {
-      //  console.log(app);
+      var onConnect = function(amqpClient) {
+        //  console.log(app);
         console.log('connected');
         //stompClient.subscribe('/queue/work-ask', message=>{console.log('ALLO');});
-        let messagingSevices=[];
+        let messagingSevices = [];
 
 
         //TODO it's ugly!!!! sytem function is increment with stompClient
-        require('./webServices/initialise')(unSafeRouteur,amqpClient);
-        require('./webServices/authWebService')(unSafeRouteur,amqpClient);
-        require('./webServices/workspaceWebService')(safe,amqpClient);
-        require('./webServices/workspaceComponentWebService')(safe,amqpClient);
-        require('./webServices/technicalComponentWebService')(safe,unSafeRouteur, app,amqpClient);
-        require('./webServices/userWebservices')(safe,amqpClient);
-        require('./webServices/rightsManagementWebService')(safe,amqpClient);
-        require('./webServices/adminWebService')(safe,amqpClient);
+        require('./webServices/initialise')(unSafeRouteur, amqpClient);
+        require('./webServices/authWebService')(unSafeRouteur, amqpClient);
+        require('./webServices/workspaceWebService')(safe, amqpClient);
+        require('./webServices/workspaceComponentWebService')(safe, amqpClient);
+        require('./webServices/technicalComponentWebService')(safe, unSafeRouteur, app, amqpClient);
+        require('./webServices/userWebservices')(safe, amqpClient);
+        require('./webServices/rightsManagementWebService')(safe, amqpClient);
+        require('./webServices/adminWebService')(safe, amqpClient);
+        require('./webServices/fragmentWebService')(safe, amqpClient);
 
         ///OTHER APP COMPONENT
         ///SECURISATION DES REQUETES
@@ -146,7 +156,9 @@ httpGet.makeRequest('GET', {
         app.use('/data/specific', unSafeRouteur);
         app.use('/data/api', unSafeRouteur);
         app.use('/data/core', safe);
-        app.use('/ihm', express.static('static'));
+        app.use('/ihm', express.static('static', {
+          etag: false
+        }));
         app.use('/browserify', express.static('browserify'));
         app.use('/npm', express.static('node_modules'));
 
@@ -167,13 +179,21 @@ httpGet.makeRequest('GET', {
               //console.log('user |',user);
             }
             errorLib.create(err, user);
-            console.log(err);
+            //console.log(err);
             //console.log('XXXXXXXXXXX',res);
-            res.status(500).send({
-              message: err.message,
-              stack: errorParser.parse(err),
-              displayMessage: err.displayMessage
-            });
+            if (!Array.isArray(err)) {
+              err = [err];
+            }
+            res.status(500).send(
+              err.map(e => {
+                console.log(e);
+                return {
+                  message: e.message,
+                  stack: errorParser.parse(e),
+                  displayMessage: e.displayMessage
+                }
+              })
+            );
           }
           //able to centralise response using res.data ans res.send(res.data)
         });
@@ -212,11 +232,11 @@ httpGet.makeRequest('GET', {
         })
       }
 
-      var onError=function(err) {
+      var onError = function(err) {
         //console.log(stompClient);
-        console.log('disconnected ',err);
-        if(err.command=='ERROR'){
-          console.log('disconnected body',err.body);
+        console.log('disconnected ', err);
+        if (err.command == 'ERROR') {
+          console.log('disconnected body', err.body);
           // let webSocket = new WebSocket(url)
           //
           // stompClient = webstomp.over(webSocket,{heartbeat: false,debug:true});

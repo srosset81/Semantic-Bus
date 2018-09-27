@@ -24,11 +24,14 @@ module.exports = {
   scrapper: require('./workSpaceComponentDirectory/scrapper.js'),
   httpGet: require('./workSpaceComponentDirectory/httpGet.js'),
   sqlConnector: require('./workSpaceComponentDirectory/sqlConnecteur.js'),
-  mongoConnector: require('./workSpaceComponentDirectory/connecteurMongoDB.js'),
+  mongoConnector: require('./workSpaceComponentDirectory/MongoDB.js'),
   sparqlRequest: require('./workSpaceComponentDirectory/sparqlRequest.js'),
   valueMapping: require('./workSpaceComponentDirectory/valueMapping.js'),
   timer: require('./workSpaceComponentDirectory/timer.js'),
   queryParamsCreation:require('./workSpaceComponentDirectory/queryParamsCreation.js'),
+  valueFromPath:require('./workSpaceComponentDirectory/valueFromPath.js'),
+  unicity:require('./workSpaceComponentDirectory/unicity.js'),
+  propertiesMatrix:require('./workSpaceComponentDirectory/propertiesMatrix.js'),
 
   /* some other modules you want */
 

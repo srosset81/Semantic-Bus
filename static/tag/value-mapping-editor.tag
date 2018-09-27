@@ -22,12 +22,14 @@
 
   <zenTable ref="mappingTable" style="flex:1" drag={true} title="vos changement de valeurs" allowdirectedit={true} disallowselect={true} disallownavigation={true}>
     <yield to="header">
-      <div style="width::50%">flux</div>
-      <div style="width::50%">remplacement</div>
+      <div style="width:50%">flux</div>
+      <div style="width:20px"></div>
+      <div style="width:50%">remplacement</div>
     </yield>
     <yield to="row">
-      <input type="text" style="width::50%" value={flowValue} data-field="flowValue"/>
-      <input type="text" style="width::50%" value={replacementValue} data-field="replacementValue"/>
+      <input type="text" style="width:50%" value={flowValue} data-field="flowValue"/>
+      <div style="width:20px;height:15px;"> -> </div>
+      <input type="text" style="width:50%" value={replacementValue} data-field="replacementValue"/>
     </yield>
   </zenTable>
 
@@ -49,7 +51,8 @@
         this.data.specificData.mappingTable=data;
       })
       this.refs.mappingTable.on('delRow', row=>{
-        this.refs.mappingTable.data.splice(row.rowid, 1);
+        console.log(row);
+        this.refs.mappingTable.data.splice(row.rowId, 1);
       });
       RiotControl.on('item_current_changed', this.updateData);
     });

@@ -1,9 +1,9 @@
 "use strict";
 //memory leak tool, code is here to don't forget
-var memwatch = require('memwatch-next');
-var hd = new memwatch.HeapDiff();
-var diff = hd.end();
-// var WebSocket = require('ws');
+// var memwatch = require('memwatch-next');
+// var hd = new memwatch.HeapDiff();
+// var diff = hd.end();
+
 var express = require('express')
 var cors = require('cors')
 var app = express();
@@ -37,11 +37,10 @@ var env = process.env;
 var httpGet = require('./webServices/workSpaceComponentDirectory/restGetJson.js');
 var fs = require('fs');
 const configUrl = env.CONFIG_URL || 'http://data-players.com/config/devOutOfDocker.json';
-//console.log("before http config",configUrl);
 httpGet.makeRequest('GET', {
   url: configUrl
 }).then(result => {
-  console.log('~~ remote config | ', result);
+  console.log('~~ remote config | ');
   const configJson = result.data;
   const content = 'module.exports = ' + JSON.stringify(result.data);
 
@@ -64,53 +63,15 @@ httpGet.makeRequest('GET', {
         jwtService.securityAPI(req, res, next);
       })
 
-
-
       app.disable('etag'); //what is that? cache desactivation in HTTP Header
 
       unSafeRouteur.use(cors());
 
-      //var webstomp = require('webstomp-client');
-
-      var url = configJson.socketServer;
-
-      //var url = 'wss://semantic-bus.org:443/stomp/ws/';
-      //var url = 'ws://35.187.66.2:15674/ws/';
-
-
-
-      // var stompClient = webstomp.client(url, {
-      //   heartbeat: {
-      //     incoming: 10000,
-      //     outgoing: 10000
-      //   },
-      //   debug: true
-      // })
-
-      // var stompClient = webstomp.over(webSocket,{heartbeat: {incoming: 10000, outgoing: 10000},debug:false});
-      //
-      // let webSocket = new WebSocket(url,{handshakeTimeout:20000});
-      // webSocket.on('error', function (m) { console.log("websocket error",m); });
-      // webSocket.on('open', function (m) { console.log("websocket connection open"); });
-      // webSocket.on('close', function (m) { console.log("websocket close",m); });
-      // let webSocket = new WebSocket(url, {
-      //   origin: 'https://semantic-bus.org'
-      // });
-
-      var login = 'guest',
-        password = 'guest';
-      //  var stompClient = webstomp.over(webSocket,{heartbeat: {incoming: 10000, outgoing: 10000},debug:true});
-
-      //client: webstomp.over(new WebSocket(url), options)
-
-      // function onMessage(message) {
-      //   console.log('message', JSON.parse(message.body));
-      //   stompClient.send('/topic/work-response', JSON.stringify({message:'AJAX va prendre cher'}));
-      // }
 
       let url;
+      console.log("PROCESS ENV", process.env.NODE_ENV)
       if(process.env.NODE_ENV === "development_docker"){
-        let url = "amqp://rabbitmq:5672";
+        url = "amqp://rabbitmq:5672";
       }else {
         url = configJson.socketServer
       }
@@ -121,12 +82,13 @@ httpGet.makeRequest('GET', {
         //}
         console.log('AMQP connected', conn);
         conn.createChannel(function(err, ch) {
-          console.log('AMQP connected 2',err);
+          console.log('AMQP connected 2');
           onConnect(ch);
           console.log('channel created');
           ch.assertQueue('work-ask', {
             durable: true
           });
+          onError(err)
           // ch.assertExchange('amq-topic', 'topic', {
           //   durable: true
           // });
@@ -239,28 +201,11 @@ httpGet.makeRequest('GET', {
       }
 
       var onError = function(err) {
-        //console.log(stompClient);
         console.log('disconnected ', err);
         if (err.command == 'ERROR') {
           console.log('disconnected body', err.body);
-          // let webSocket = new WebSocket(url)
-          //
-          // stompClient = webstomp.over(webSocket,{heartbeat: false,debug:true});
-          // let amqpHost=env.AMQPHOST;
-          // console.log(login, password, onConnect, onError,amqpHost);
-          // if(amqpHost!=undefined){
-          //   stompClient.connect(login, password, onConnect, onError,amqpHost);
-          // }else{
-          //   stompClient.connect(login, password, onConnect, onError);
-          // }
         }
       }
-      // let amqpHost=env.AMQPHOST;
-      // if(amqpHost!=undefined){
-      //   stompClient.connect(login, password, onConnect, onError,amqpHost);
-      // }else{
-      //   stompClient.connect(login, password, onConnect, onError);
-      // }
     }
   });
 })

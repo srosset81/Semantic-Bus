@@ -16,7 +16,7 @@ services:
       container_name: semanticbus
       image: debian/latest
       environment:
-          - NODE_ENV=development
+          - NODE_ENV=development_docker
       volumes:
         - ./webServices:/data/app/webServices
         - ./lib:/data/app/lib
@@ -101,9 +101,6 @@ services:
         ports:
           - '4444'
           - '5900'
-
-
-
 
 networks: 
   selenium-grid:

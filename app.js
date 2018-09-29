@@ -108,8 +108,14 @@ httpGet.makeRequest('GET', {
       //   stompClient.send('/topic/work-response', JSON.stringify({message:'AJAX va prendre cher'}));
       // }
 
-
-      amqp.connect("amqp://rabbitmq:5672" + '/' + configJson.amqpHost, function(err, conn) {
+      let url;
+      if(process.env.NODE_ENV === "development_docker"){
+        let url = "amqp://rabbitmq:5672";
+      }else {
+        url = configJson.socketServer
+      }
+      
+      amqp.connect(url + '/' + configJson.amqpHost, function(err, conn) {
         //if(err!=undefined){
         console.log('AMQP Connection Error', err);
         //}

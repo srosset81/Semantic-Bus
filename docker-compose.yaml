@@ -39,6 +39,8 @@ services:
       hostname: rabbitmq
       ports:
         - "5672:5672"
+        - 15674:15674
+        - 15672:15672
       expose:
         - "5672"
       labels:
@@ -71,4 +73,37 @@ services:
         # networks:
         #     - grappe
 
+    e2e:
+      container_name: e2e
+      depends_on:
+          - seleniume2e
+          - semanticbus
+      image: codeception/codeceptjs
+      build:
+          context: ./tests/e2e
+      environment:
+          # configure selenium host
+          - SELENIUM_HOST=seleniume2e
+          - SELENIUM_PORT=4444
+          # configure app to test
+      networks:
+          - selenium-grid
+          # required to test frontend availability
+      volumes:
+          - ./tests/e2e:/tests/e2e
+          - /tmp/output:/tmp/output
 
+    seleniume2e:
+        container_name: seleniume2e
+        image: selenium/standalone-chrome
+        networks:
+            - selenium-grid
+        ports:
+          - '4444'
+          - '5900'
+
+
+
+
+networks: 
+  selenium-grid:

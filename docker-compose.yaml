@@ -10,7 +10,11 @@ services:
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
       restart: unless-stopped
-
+      networks:
+        traefik:
+          aliases:
+              - semanticbus.docker
+             
     semanticbus:
       build: .
       container_name: semanticbus
@@ -21,7 +25,8 @@ services:
         - ./webServices:/data/app/webServices
         - ./lib:/data/app/lib
         - ./static:/data/app/static
-        
+      networks:
+        - traefik  
       links:
           - mongodb
           - rabbitmq
@@ -38,13 +43,15 @@ services:
       image: semanticbus/rabbitmq-stomp
       hostname: rabbitmq
       ports:
-        - "5672:5672"
+        - 5672:5672
         - 15674:15674
         - 15672:15672
       expose:
-        - "5672"
+        - 5672
       labels:
         NAME: "rabbitmq"
+      networks:
+        - traefik  
       # volumes:
       #   - ./rabbitmq-isolated.conf:/etc/rabbitmq/rabbitmq.config
       labels:
@@ -70,6 +77,8 @@ services:
         expose:
           - "27017"
         command: mongod --smallfiles --logpath=/dev/null # --quiet
+        networks:
+          - traefik  
         # networks:
         #     - grappe
 
@@ -85,22 +94,25 @@ services:
           # configure selenium host
           - SELENIUM_HOST=seleniume2e
           - SELENIUM_PORT=4444
+          - APP_URL=http://semanticbus.docker
           # configure app to test
-      networks:
-          - selenium-grid
-          # required to test frontend availability
       volumes:
-          - ./tests/e2e:/tests/e2e
-          - /tmp/output:/tmp/output
+          - ./tests/e2e:/tests:ro
+          - ./tests/logs:/tmp/output:rw
+      networks:
+        - traefik
+        - selenium-grid
 
     seleniume2e:
         container_name: seleniume2e
         image: selenium/standalone-chrome
-        networks:
-            - selenium-grid
         ports:
-          - '4444'
-          - '5900'
+          - '4444:4444'
+          - '5900:5900'
+        networks:
+          - traefik
+          - selenium-grid
 
 networks: 
-  selenium-grid:
+  traefik: 
+  selenium-grid: 

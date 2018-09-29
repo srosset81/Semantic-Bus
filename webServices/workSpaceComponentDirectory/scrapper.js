@@ -11,7 +11,7 @@ module.exports = {
   //phantom: require('phantom'),
   sift: require('sift'),
   webdriverio: require('webdriverio'),
-  base: require('../../test/wdio.conf.base'),
+  base: require('../../tests/wdio.conf.base'),
 
   getPriceState: function(specificData, moPrice, recordPrice) {
     if (specificData.sauceLabToken != null) {

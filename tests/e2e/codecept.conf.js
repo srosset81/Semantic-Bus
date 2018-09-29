@@ -3,7 +3,7 @@ exports.config = {
         WebDriverIO: {
             host: process.env.SELENIUM_HOST || '127.0.0.1',
             port: process.env.SELENIUM_PORT || 4444,
-            url: process.env.APP_URL || 'http://localhost:3000',
+            url: process.env.APP_URL,
             browser: 'chrome',
             desiredCapabilities: {
                 chromeOptions: {

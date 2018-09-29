@@ -3,7 +3,7 @@
 // var memwatch = require('memwatch-next');
 // var hd = new memwatch.HeapDiff();
 // var diff = hd.end();
-
+// var WebSocket = require('ws');
 var express = require('express')
 var cors = require('cors')
 var app = express();
@@ -37,6 +37,7 @@ var env = process.env;
 var httpGet = require('./webServices/workSpaceComponentDirectory/restGetJson.js');
 var fs = require('fs');
 const configUrl = env.CONFIG_URL || 'http://data-players.com/config/devOutOfDocker.json';
+//console.log("before http config",configUrl);
 httpGet.makeRequest('GET', {
   url: configUrl
 }).then(result => {
@@ -51,7 +52,6 @@ httpGet.makeRequest('GET', {
       throw err;
     } else {
 
-      console.log("~~ remote configuration saved");
       require('./lib/core/Oauth/google_auth_strategy')(passport);
 
       var jwtService = require('./webServices/jwtService')
@@ -59,9 +59,9 @@ httpGet.makeRequest('GET', {
 
       //Sécurisation des route de data
       safe.use(function(req, res, next) {
-        // ensureSec(req,res,next)
         jwtService.securityAPI(req, res, next);
       })
+
 
       app.disable('etag'); //what is that? cache desactivation in HTTP Header
 
@@ -69,7 +69,7 @@ httpGet.makeRequest('GET', {
 
 
       let url;
-      console.log("PROCESS ENV", process.env.NODE_ENV)
+      console.log("PROCESS ENV", process.env, process.env.NODE_ENV)
       if(process.env.NODE_ENV === "development_docker"){
         url = "amqp://rabbitmq:5672";
       }else {
@@ -82,25 +82,18 @@ httpGet.makeRequest('GET', {
         //}
         console.log('AMQP connected', conn);
         conn.createChannel(function(err, ch) {
-          console.log('AMQP connected 2');
+          console.log('AMQP connected 2',err);
           onConnect(ch);
           console.log('channel created');
           ch.assertQueue('work-ask', {
             durable: true
           });
-          onError(err)
-          // ch.assertExchange('amq-topic', 'topic', {
-          //   durable: true
-          // });
         });
 
       });
       var onConnect = function(amqpClient) {
         //  console.log(app);
-        console.log('connected');
-        //stompClient.subscribe('/queue/work-ask', message=>{console.log('ALLO');});
-        let messagingSevices = [];
-
+        console.log('AMQP connected');
 
         //TODO it's ugly!!!! sytem function is increment with stompClient
         require('./webServices/initialise')(unSafeRouteur, amqpClient);
@@ -147,8 +140,6 @@ httpGet.makeRequest('GET', {
               //console.log('user |',user);
             }
             errorLib.create(err, user);
-            //console.log(err);
-            //console.log('XXXXXXXXXXX',res);
             if (!Array.isArray(err)) {
               err = [err];
             }
@@ -177,10 +168,6 @@ httpGet.makeRequest('GET', {
               console.log("jenkins JOB production triggered")
             })
           }
-          // console.log('Listening on port  ');
-          // console.log(this.address().port);
-          //console.log('new message from master 18');
-          //console.log(this.address());
 
         })
 
@@ -191,9 +178,6 @@ httpGet.makeRequest('GET', {
           var hash = params + ".rCIAnB6OZN-jvB1XIOagkbUTKQQmQ1ogeb5DUVFNUko";
           res.send(hash)
         });
-
-        /// Nous Securisons desormais IHM par un appel AJAX
-        /// à lentrée sur la page application.html
 
         server.on('error', function(err) {
           console.log(err)

@@ -5,6 +5,9 @@ FROM debian:latest
 # replace shell with bash so we can source files
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
+# define app folder
+WORKDIR /data/app
+
 # update the repository sources list
 # and install dependencies
 RUN apt-get update \
@@ -33,27 +36,19 @@ RUN source $NVM_DIR/nvm.sh \
 # add node and npm to path so the commands are available
 ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
-ENV PORT 80
 
 # confirm installation
 RUN node -v
 RUN npm -v
 
-
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
-
-
-RUN npm install
-# If you are building your code for production
-# RUN npm install --only=production
-
 # Bundle app source
-COPY . .
 
+ADD . /data/app/
 
-EXPOSE 80 443
+ADD ./wait-for-it.sh /data/scripts/
 
-CMD [ "npm", "start" ]
+RUN cd /data/app && ls && npm install
+
+EXPOSE 80
+
+CMD [ "npm", "run", "start:server" ]

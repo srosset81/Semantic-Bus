@@ -15,7 +15,6 @@ var passport = require('passport');
 var http = require('http');
 http.globalAgent.maxSockets = 1000000000;
 var server = http.Server(app);
-var https = require('https');
 var amqp = require('amqplib/callback_api');
 
 
@@ -108,8 +107,9 @@ httpGet.makeRequest('GET', {
       //   console.log('message', JSON.parse(message.body));
       //   stompClient.send('/topic/work-response', JSON.stringify({message:'AJAX va prendre cher'}));
       // }
-      //console.log(env.AMQPHOST);
-      amqp.connect(url + '/' + configJson.amqpHost, function(err, conn) {
+
+
+      amqp.connect("amqp://rabbitmq:5672" + '/' + configJson.amqpHost, function(err, conn) {
         //if(err!=undefined){
         console.log('AMQP Connection Error', err);
         //}
@@ -198,8 +198,8 @@ httpGet.makeRequest('GET', {
           //able to centralise response using res.data ans res.send(res.data)
         });
 
-        server.listen(process.env.PORT || 8080, function() {
-          console.log('~~ server started at ', this.address().address, ':', this.address().port)
+        app.listen(80, function(err) {
+          console.log('~~ server started at ', err, ':', this.address())
           //console.log('ALLO');
           require('./lib/core/timerScheduler').run();
 
@@ -255,8 +255,6 @@ httpGet.makeRequest('GET', {
       // }else{
       //   stompClient.connect(login, password, onConnect, onError);
       // }
-
-
     }
   });
 })

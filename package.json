@@ -5,6 +5,7 @@
   "private": true,
   "main": "",
   "scripts": {
+    "start:server": "nodemon  --watch ./webServices --watch ./lib  --watch ./app.js app.js",
     "scrapp": "node webServices/workSpaceComponentDirectory/testscrapper.js",
     "amqpPull": "sudo docker pull semanticbus/rabbitmq-stomp",
     "amqpRun": "sudo docker stop rabbitmq && docker rm rabbitmq && sudo docker run -d -p 15672:15672 -p 15674:15674 -p 5672:5672 --name rabbitmq semanticbus/rabbitmq-stomp",
@@ -98,6 +99,7 @@
   "devDependencies": {
     "chromedriver": "^2.37.0",
     "mocha-junit-reporter": "^1.13.0",
+    "nodemon": "^1.18.4",
     "wdio-chromedriver-service": "^0.1.2"
   }
 }

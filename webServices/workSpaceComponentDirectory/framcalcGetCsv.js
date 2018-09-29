@@ -4,7 +4,6 @@ module.exports = {
   description: 'intéroger une feuille de calcule Framacalc qui fourni un flux CSV',
   editor: 'framacalc-get-csv-editor',
   //  url: require('url'),
-  //  http: require('http'),
   graphIcon: 'framacalcCsv.png',
   tags: [
     'http://semantic-bus.org/data/tags/inComponents',
@@ -13,7 +12,7 @@ module.exports = {
   url: require('url'),
   http: require('http'),
   https: require('https'),
-  csv: require('csvtojson'),
+  // csv: require('csvtojson'),
 
   makeRequest: function(key, offset, provider) {
 

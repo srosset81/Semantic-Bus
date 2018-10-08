@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 .PHONY: docker-build docker-up start stop restart up-test-container launch-test
 
-DOCKER_COMPOSE=docker-compose
+DOCKER_COMPOSE=docker-compose -f docker-compose.dev.yaml
 
 
 # Docker

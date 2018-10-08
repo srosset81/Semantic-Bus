@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.0'
 services:
     
     proxy:
@@ -10,10 +10,6 @@ services:
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
       restart: unless-stopped
-      networks:
-        traefik:
-          aliases:
-              - semanticbus.docker
              
     semanticbus:
       build: .
@@ -59,9 +55,6 @@ services:
         - "traefik.port=15672"
         - "traefik.backend=rabbitmq"
         - "traefik.frontend.entryPoints=http"
-      # networks:
-      #   - grappe
-      #   - traefik
      
     mongodb:
         hostname: rabbitmq
@@ -77,42 +70,3 @@ services:
         expose:
           - "27017"
         command: mongod --smallfiles --logpath=/dev/null # --quiet
-        networks:
-          - traefik  
-        # networks:
-        #     - grappe
-
-    e2e:
-      container_name: e2e
-      depends_on:
-          - seleniume2e
-          - semanticbus
-      image: codeception/codeceptjs
-      build:
-          context: ./tests/e2e
-      environment:
-          # configure selenium host
-          - SELENIUM_HOST=seleniume2e
-          - SELENIUM_PORT=4444
-          - APP_URL=http://semanticbus.docker
-          # configure app to test
-      volumes:
-          - ./tests/e2e:/tests:ro
-          - ./tests/logs:/tmp/output:rw
-      networks:
-        - traefik
-        - selenium-grid
-
-    seleniume2e:
-        container_name: seleniume2e
-        image: selenium/standalone-chrome
-        ports:
-          - '4444:4444'
-          - '5900:5900'
-        networks:
-          - traefik
-          - selenium-grid
-
-networks: 
-  traefik: 
-  selenium-grid: 
